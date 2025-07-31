@@ -127,6 +127,25 @@ with gr.Blocks(
     textarea:focus {
         background-color: #3b3b3b !important;
     }
+    
+    /* Change analyze button color */
+    .purple-button,
+    button[variant="primary"],
+    .gr-button-primary,
+    button.primary {
+        background-color: #611DD9 !important;
+        border-color: #611DD9 !important;
+        background: #611DD9 !important;
+    }
+    
+    .purple-button:hover,
+    button[variant="primary"]:hover,
+    .gr-button-primary:hover,
+    button.primary:hover {
+        background-color: #5016b3 !important;
+        border-color: #5016b3 !important;
+        background: #5016b3 !important;
+    }
     """,
 ) as demo:
     gr.Markdown("# 🎨 RosoUX Anàlisi d'Imatges")
@@ -192,7 +211,7 @@ with gr.Blocks(
     )
 
     analyze_btn = gr.Button(
-        "🔍 Analitzar Imatges", variant="primary", interactive=False, size="lg"
+        "🔍 Analitzar Imatges", variant="primary", interactive=False, size="lg", elem_classes=["purple-button"]
     )
 
     # Bottom section - LLM response
