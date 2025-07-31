@@ -1,5 +1,4 @@
 import base64
-import json
 
 import gradio as gr
 import requests
@@ -10,7 +9,7 @@ def encode_image_to_base64(image_path):
     try:
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode("utf-8")
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -20,6 +19,8 @@ def call_ollama_model(prompt, images_base64=None):
         url = "http://localhost:11434/api/generate"
 
         payload = {"model": "llava-phi3:latest", "prompt": prompt, "stream": False}
+
+        print(len(images_base64))
 
         # Add images if provided
         if images_base64:
