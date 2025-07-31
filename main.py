@@ -1,7 +1,7 @@
 import gradio as gr
 
 
-def generate_llm_response(files, classification, *type_selections):
+def generate_llm_response(files, classification, user_description, *type_selections):
     if not files:
         return "Please upload at least one image for analysis."
 
@@ -16,6 +16,10 @@ def generate_llm_response(files, classification, *type_selections):
         return f"Please specify the type for all {len(files)} uploaded images."
 
     analysis_results = []
+    
+    # Add user description if provided
+    if user_description and user_description.strip():
+        analysis_results.append(f"**User Description:** {user_description.strip()}\n")
 
     for i, image_type in enumerate(valid_types):
         filename = files[i].name if hasattr(files[i], "name") else f"Image {i + 1}"
@@ -86,8 +90,12 @@ def update_type_dropdowns(files, classification):
     return row_updates + image_updates + dropdown_updates
 
 
-def check_button_state(files, classification, *type_selections):
+def check_button_state(files, classification, user_description, *type_selections):
     if not files or not classification:
+        return gr.update(interactive=False)
+    
+    # Check if user description is provided
+    if not user_description or not user_description.strip():
         return gr.update(interactive=False)
 
     # Check if all uploaded images have type selections
@@ -149,6 +157,14 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
                 )
                 type_dropdowns.append(dropdown)
 
+    # User description text field
+    user_description = gr.Textbox(
+        label="📝 Description",
+        placeholder="Describe what you've done or any additional context about these images...",
+        lines=3,
+        max_lines=5,
+    )
+
     analyze_btn = gr.Button(
         "🔍 Analyze Images", variant="primary", interactive=False, size="lg"
     )
@@ -158,7 +174,7 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
     llm_output = gr.Textbox(
         label="📊 Detailed Analysis",
         lines=15,
-        placeholder="Upload images, select classification, specify type for each image, then click '🔍 Analyze Images'...",
+        placeholder="Upload images, select classification, specify type for each image, add description, then click '🔍 Analyze Images'...",
         interactive=False,
         show_copy_button=True,
     )
@@ -182,7 +198,7 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
     )
 
     # Update button state when any input changes
-    all_inputs = [files, classification] + type_dropdowns
+    all_inputs = [files, classification, user_description] + type_dropdowns
 
     for component in all_inputs:
         component.change(
@@ -193,7 +209,7 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
 
     analyze_btn.click(
         fn=generate_llm_response,
-        inputs=[files, classification] + type_dropdowns,
+        inputs=[files, classification, user_description] + type_dropdowns,
         outputs=llm_output,
     )
 
