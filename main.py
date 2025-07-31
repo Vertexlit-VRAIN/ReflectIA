@@ -1,4 +1,44 @@
+import base64
+import json
+
 import gradio as gr
+import requests
+
+
+def encode_image_to_base64(image_path):
+    """Convert image to base64 string for Ollama"""
+    try:
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception as e:
+        return None
+
+
+def call_ollama_model(prompt, images_base64=None):
+    """Call local Ollama model"""
+    try:
+        url = "http://localhost:11434/api/generate"
+
+        payload = {"model": "llava-phi3:latest", "prompt": prompt, "stream": False}
+
+        # Add images if provided
+        if images_base64:
+            payload["images"] = images_base64
+
+        response = requests.post(url, json=payload, timeout=60)
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("response", "No response from model")
+        else:
+            return f"Error: Ollama returned status {response.status_code}"
+
+    except requests.exceptions.ConnectionError:
+        return "Error: No s'ha pogut connectar amb Ollama. Assegureu-vos que Ollama està funcionant a localhost:11434"
+    except requests.exceptions.Timeout:
+        return "Error: Timeout - El model ha trigat massa temps a respondre"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 def generate_llm_response(files, classification, user_description, *type_selections):
@@ -15,33 +55,47 @@ def generate_llm_response(files, classification, user_description, *type_selecti
     if len(valid_types) != len(files):
         return f"Si us plau, especifiqueu el tipus per a totes les {len(files)} imatges pujades."
 
-    analysis_results = []
+    # Prepare images for Ollama
+    images_base64 = []
+    image_info = []
 
-    # Add user description if provided
+    for i, file in enumerate(files):
+        if hasattr(file, "name"):
+            image_path = file.name
+        else:
+            image_path = str(file)
+
+        # Encode image to base64
+        base64_image = encode_image_to_base64(image_path)
+        if base64_image:
+            images_base64.append(base64_image)
+            filename = (
+                image_path.split("/")[-1] if "/" in image_path else f"Image {i + 1}"
+            )
+            image_info.append(f"{filename} - {valid_types[i]}")
+
+    # Create prompt for Ollama
+    context = f"Classificació: {classification}\n"
     if user_description and user_description.strip():
-        analysis_results.append(
-            f"**Descripció de l'Usuari:** {user_description.strip()}\n"
-        )
+        context += f"Descripció de l'usuari: {user_description.strip()}\n"
 
-    for i, image_type in enumerate(valid_types):
-        filename = files[i].name if hasattr(files[i], "name") else f"Image {i + 1}"
-        if classification == "Editorial":
-            analysis_results.append(f"""
-**{filename}** - {image_type}:
-• {image_type.lower()} editorial professional amb excel·lent jerarquia visual
-• Alineació de marca adequada per a col·locació de {image_type.lower()}
-• Compleix els estàndards editorials per a publicació
-""")
-        else:  # Social Network
-            analysis_results.append(f"""
-**{filename}** - {image_type}:
-• Optimitzat per al format de xarxes socials {image_type.lower()}
-• Alt potencial d'engagement per a publicacions {image_type.lower()}
-• Adequat per a l'audiència de plataformes socials
-""")
+    context += f"Imatges a analitzar: {', '.join(image_info)}\n"
 
-    header = f"✨ **Anàlisi {classification} Completada**\n"
-    return header + "\n".join(analysis_results)
+    prompt = f"""
+{context}
+
+Analitza aquestes imatges segons la classificació '{classification}' i proporciona una anàlisi detallada en català.
+
+Per a cada imatge, proporciona:
+- Una avaluació de la qualitat visual
+- Adequació per al tipus especificat ({", ".join(set(valid_types))})
+- Recomanacions específiques
+
+Respon en format markdown amb punts clars i concisos.
+"""
+
+    # Call Ollama model
+    return call_ollama_model(prompt, images_base64)
 
 
 def update_type_dropdowns(files, classification):
@@ -211,7 +265,11 @@ with gr.Blocks(
     )
 
     analyze_btn = gr.Button(
-        "🔍 Analitzar Imatges", variant="primary", interactive=False, size="lg", elem_classes=["purple-button"]
+        "🔍 Analitzar Imatges",
+        variant="primary",
+        interactive=False,
+        size="lg",
+        elem_classes=["purple-button"],
     )
 
     # Bottom section - LLM response
@@ -258,4 +316,4 @@ with gr.Blocks(
         outputs=llm_output,
     )
 
-demo.launch()
+demo.launch(share=True)
