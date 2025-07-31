@@ -8,3 +8,46 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
+env/
+
+# Gradio-specific
+gradio_cached_examples/
+.gradio/
+flagged/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Model files (uncomment if storing large models)
+# *.bin
+# *.safetensors
+# *.ckpt
+# *.pth
+
+# Data files (uncomment if storing large datasets)
+# *.csv
+# *.json
+# *.parquet
+# data/
