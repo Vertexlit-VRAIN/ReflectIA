@@ -3,42 +3,44 @@ import gradio as gr
 
 def generate_llm_response(files, classification, user_description, *type_selections):
     if not files:
-        return "Please upload at least one image for analysis."
+        return "Si us plau, pugeu almenys una imatge per a l'anàlisi."
 
     if not classification:
-        return "Please select a classification first."
+        return "Si us plau, seleccioneu primer una classificació."
 
     # Filter out None values and check if we have type selections for all images
     valid_types = [
         t for t in type_selections[: len(files)] if t is not None and t != ""
     ]
     if len(valid_types) != len(files):
-        return f"Please specify the type for all {len(files)} uploaded images."
+        return f"Si us plau, especifiqueu el tipus per a totes les {len(files)} imatges pujades."
 
     analysis_results = []
-    
+
     # Add user description if provided
     if user_description and user_description.strip():
-        analysis_results.append(f"**User Description:** {user_description.strip()}\n")
+        analysis_results.append(
+            f"**Descripció de l'Usuari:** {user_description.strip()}\n"
+        )
 
     for i, image_type in enumerate(valid_types):
         filename = files[i].name if hasattr(files[i], "name") else f"Image {i + 1}"
         if classification == "Editorial":
             analysis_results.append(f"""
 **{filename}** - {image_type}:
-• Professional editorial {image_type.lower()} with excellent visual hierarchy
-• Brand alignment suitable for {image_type.lower()} placement
-• Meets editorial standards for publication
+• {image_type.lower()} editorial professional amb excel·lent jerarquia visual
+• Alineació de marca adequada per a col·locació de {image_type.lower()}
+• Compleix els estàndards editorials per a publicació
 """)
         else:  # Social Network
             analysis_results.append(f"""
 **{filename}** - {image_type}:
-• Optimized for {image_type.lower()} social media format
-• High engagement potential for {image_type.lower()} posts
-• Suitable for social platform audience
+• Optimitzat per al format de xarxes socials {image_type.lower()}
+• Alt potencial d'engagement per a publicacions {image_type.lower()}
+• Adequat per a l'audiència de plataformes socials
 """)
 
-    header = f"✨ **{classification} Analysis Complete**\n"
+    header = f"✨ **Anàlisi {classification} Completada**\n"
     return header + "\n".join(analysis_results)
 
 
@@ -53,9 +55,9 @@ def update_type_dropdowns(files, classification):
 
     type_options = []
     if classification == "Editorial":
-        type_options = ["cover", "interior"]
+        type_options = ["portada", "interior"]
     elif classification == "Social Network":
-        type_options = ["instagram artiste", "instagram concurs", "twiter artista"]
+        type_options = ["instagram artista", "instagram concurs", "twitter artista"]
 
     row_updates = []
     image_updates = []
@@ -68,12 +70,15 @@ def update_type_dropdowns(files, classification):
             # Show thumbnail image
             image_updates.append(gr.update(visible=True, value=files[i]))
             # Show dropdown with options
+            filename = files[i].name if hasattr(files[i], "name") else f"Image {i + 1}"
+            if "/" in filename:
+                filename = filename.split("/")[-1]  # Get just the filename from path
             dropdown_updates.append(
                 gr.update(
                     visible=True,
                     choices=type_options,
                     value=None,
-                    label=f"Type for {files[i].name if hasattr(files[i], 'name') else f'Image {i + 1}'}",
+                    label=f"Tipus per a {filename}",
                 )
             )
 
@@ -93,7 +98,7 @@ def update_type_dropdowns(files, classification):
 def check_button_state(files, classification, user_description, *type_selections):
     if not files or not classification:
         return gr.update(interactive=False)
-    
+
     # Check if user description is provided
     if not user_description or not user_description.strip():
         return gr.update(interactive=False)
@@ -105,16 +110,16 @@ def check_button_state(files, classification, user_description, *type_selections
     return gr.update(interactive=len(valid_types) == len(files))
 
 
-with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
-    gr.Markdown("# 🎨 RosoUX Image Analysis")
+with gr.Blocks(title="RosoUX - AI Image Analysis", theme="Taithrah/Minimal") as demo:
+    gr.Markdown("# 🎨 RosoUX Anàlisi d'Imatges")
     gr.Markdown(
-        "### Upload your images and discover AI-powered insights for editorial and social media content"
+        "### Pugeu les vostres imatges i descobriu informació potenciada per IA per a contingut editorial i de xarxes socials"
     )
 
     # Image classification selection
     classification = gr.Dropdown(
         choices=["Editorial", "Social Network"],
-        label="📋 Image Classification",
+        label="📋 Classificació d'Imatges",
         value=None,
     )
 
@@ -122,8 +127,9 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
     files = gr.File(
         file_count="multiple",
         file_types=["image"],
-        label="📸 Upload Images",
-        height=150,
+        label="📸 Afegir imatges",
+        height=200,
+        elem_classes="large-upload-button",
     )
 
     # Dynamic thumbnails and type selection dropdowns (up to 10 images)
@@ -151,7 +157,7 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
             with gr.Column(scale=2):
                 dropdown = gr.Dropdown(
                     choices=[],
-                    label=f"Type for Image {i + 1}",
+                    label=f"Tipus per a Imatge {i + 1}",
                     visible=False,
                     value=None,
                 )
@@ -159,22 +165,22 @@ with gr.Blocks(title="RosoUX - AI Image Analysis") as demo:
 
     # User description text field
     user_description = gr.Textbox(
-        label="📝 Description",
-        placeholder="Describe what you've done or any additional context about these images...",
+        label="📝 Descripció",
+        placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges...",
         lines=3,
         max_lines=5,
     )
 
     analyze_btn = gr.Button(
-        "🔍 Analyze Images", variant="primary", interactive=False, size="lg"
+        "🔍 Analitzar Imatges", variant="primary", interactive=False, size="lg"
     )
 
     # Bottom section - LLM response
-    gr.Markdown("## 🤖 AI Analysis Results")
+    gr.Markdown("## 🤖 Resultats de l'Anàlisi IA")
     llm_output = gr.Textbox(
-        label="📊 Detailed Analysis",
+        label="📊 Anàlisi Detallada",
         lines=15,
-        placeholder="Upload images, select classification, specify type for each image, add description, then click '🔍 Analyze Images'...",
+        placeholder="Pugeu imatges, seleccioneu classificació, especifiqueu el tipus per a cada imatge, afegiu descripció i després cliqueu '🔍 Analitzar Imatges'...",
         interactive=False,
         show_copy_button=True,
     )
