@@ -122,6 +122,11 @@ with gr.Blocks(
         background-color: #3b3b3b !important;
         color: white !important;
     }
+    
+    /* Change textbox focus background to 3b3b3b */
+    textarea:focus {
+        background-color: #3b3b3b !important;
+    }
     """,
 ) as demo:
     gr.Markdown("# 🎨 RosoUX Anàlisi d'Imatges")
