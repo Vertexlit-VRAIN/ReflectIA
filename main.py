@@ -110,7 +110,20 @@ def check_button_state(files, classification, user_description, *type_selections
     return gr.update(interactive=len(valid_types) == len(files))
 
 
-with gr.Blocks(title="RosoUX - AI Image Analysis", theme="Taithrah/Minimal") as demo:
+with gr.Blocks(
+    title="RosoUX - AI Image Analysis",
+    theme="Taithrah/Minimal",
+    css="""
+    /* Light gray background only for dropdown input field */
+    .visible-dropdown select,
+    .visible-dropdown input,
+    .visible-dropdown .gr-box,
+    .visible-dropdown .wrap {
+        background-color: #3b3b3b !important;
+        color: white !important;
+    }
+    """,
+) as demo:
     gr.Markdown("# 🎨 RosoUX Anàlisi d'Imatges")
     gr.Markdown(
         "### Pugeu les vostres imatges i descobriu informació potenciada per IA per a contingut editorial i de xarxes socials"
@@ -121,6 +134,7 @@ with gr.Blocks(title="RosoUX - AI Image Analysis", theme="Taithrah/Minimal") as 
         choices=["Editorial", "Social Network"],
         label="📋 Classificació d'Imatges",
         value=None,
+        elem_classes=["visible-dropdown"],
     )
 
     # File upload
@@ -160,6 +174,7 @@ with gr.Blocks(title="RosoUX - AI Image Analysis", theme="Taithrah/Minimal") as 
                     label=f"Tipus per a Imatge {i + 1}",
                     visible=False,
                     value=None,
+                    elem_classes=["visible-dropdown"],
                 )
                 type_dropdowns.append(dropdown)
 
