@@ -1,12 +1,40 @@
 import base64
+from functools import lru_cache
 
 import gradio as gr
 import requests
 
+# Constants
+MAX_IMAGES = 10
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "llava-phi3:latest"
+TIMEOUT_SECONDS = 60
+
+
+# Cache for base64 encoded images to avoid re-processing
+@lru_cache(maxsize=50)
+def cached_encode_image_to_base64(image_path, file_size):
+    """Convert image to base64 string with caching"""
+    try:
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception:
+        return None
+
 
 def encode_image_to_base64(image_path):
-    """Convert image to base64 string for Ollama"""
+    """Convert image to base64 string for Ollama with caching"""
     try:
+        import os
+
+        file_size = os.path.getsize(image_path)
+
+        # Try cached version first
+        cached_result = cached_encode_image_to_base64(image_path, file_size)
+        if cached_result:
+            return cached_result
+
+        # Fallback to direct encoding if cache fails
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode("utf-8")
     except FileNotFoundError:
@@ -22,15 +50,13 @@ def encode_image_to_base64(image_path):
 def call_ollama_model(prompt, images_base64=None):
     """Call local Ollama model"""
     try:
-        url = "http://localhost:11434/api/generate"
-
-        payload = {"model": "llava-phi3:latest", "prompt": prompt, "stream": False}
+        payload = {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False}
 
         # Add images if provided
         if images_base64:
             payload["images"] = images_base64
 
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(OLLAMA_URL, json=payload, timeout=TIMEOUT_SECONDS)
 
         if response.status_code == 200:
             result = response.json()
@@ -38,7 +64,7 @@ def call_ollama_model(prompt, images_base64=None):
                 "response", "❌ **Error**: No s'ha rebut resposta del model"
             )
         else:
-            return f"❌ **Error del Model**: Ollama ha retornat l'estat {response.status_code}\n\n🔧 **Solució**: Comproveu que el model 'llava-phi3:latest' està instal·lat i disponible."
+            return f"❌ **Error del Model**: Ollama ha retornat l'estat {response.status_code}\n\n🔧 **Solució**: Comproveu que el model '{OLLAMA_MODEL}' està instal·lat i disponible."
 
     except requests.exceptions.ConnectionError:
         return """❌ **Error de Connexió**: No s'ha pogut connectar amb Ollama
@@ -138,7 +164,7 @@ Respon amb punts clars i concisos.
 
 def update_type_dropdowns(files, classification):
     image_count = len(files) if files else 0
-    counter_text = f"**Imatges**: {image_count}/10"
+    counter_text = f"**Imatges**: {image_count}/{MAX_IMAGES}"
 
     if not classification:
         # Return updates for counter, rows, images and dropdowns (31 total)
@@ -183,14 +209,16 @@ def update_type_dropdowns(files, classification):
             )
 
         # Hide unused components
-        for i in range(len(files), 10):
+        for i in range(len(files), MAX_IMAGES):
             row_updates.append(gr.update(visible=False))
             image_updates.append(gr.update(visible=False, value=None))
             dropdown_updates.append(gr.update(visible=False, choices=[], value=None))
     else:
-        row_updates = [gr.update(visible=False)] * 10
-        image_updates = [gr.update(visible=False, value=None)] * 10
-        dropdown_updates = [gr.update(visible=False, choices=[], value=None)] * 10
+        row_updates = [gr.update(visible=False)] * MAX_IMAGES
+        image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
+        dropdown_updates = [
+            gr.update(visible=False, choices=[], value=None)
+        ] * MAX_IMAGES
 
     return [counter_text] + row_updates + image_updates + dropdown_updates
 
@@ -223,28 +251,20 @@ def auto_detect_image_type(filename, classification):
     return None
 
 
-def check_button_state(files, classification, user_description, *type_selections):
-    if not files or not classification:
-        return gr.update(interactive=False)
-
-    # Check if user description is provided
-    if not user_description or not user_description.strip():
-        return gr.update(interactive=False)
-
-    # Check if all uploaded images have type selections
-    valid_types = [
-        t for t in type_selections[: len(files)] if t is not None and t != ""
-    ]
-    return gr.update(interactive=len(valid_types) == len(files))
-
-
-def update_status_message(files, classification, user_description, *type_selections):
-    """Update status message based on current form state"""
+def update_button_and_status(files, classification, user_description, *type_selections):
+    """Combined function to update both button state and status message"""
+    # Common validation logic
     if not classification:
-        return "📋 **Estat**: Seleccioneu primer una classificació (Editorial o Social Network)"
+        return (
+            gr.update(interactive=False),
+            "📋 **Estat**: Seleccioneu primer una classificació (Editorial o Social Network)",
+        )
 
     if not files:
-        return "📸 **Estat**: Pugeu una o més imatges per analitzar"
+        return (
+            gr.update(interactive=False),
+            "📸 **Estat**: Pugeu una o més imatges per analitzar",
+        )
 
     valid_types = [
         t for t in type_selections[: len(files)] if t is not None and t != ""
@@ -252,12 +272,22 @@ def update_status_message(files, classification, user_description, *type_selecti
 
     if len(valid_types) < len(files):
         missing_count = len(files) - len(valid_types)
-        return f"🏷️ **Estat**: Especifiqueu el tipus per a {missing_count} imatge{'s' if missing_count > 1 else ''} més"
+        return (
+            gr.update(interactive=False),
+            f"🏷️ **Estat**: Especifiqueu el tipus per a {missing_count} imatge{'s' if missing_count > 1 else ''} més",
+        )
 
     if not user_description or not user_description.strip():
-        return "📝 **Estat**: Afegiu una descripció del vostre treball per continuar"
+        return (
+            gr.update(interactive=False),
+            "📝 **Estat**: Afegiu una descripció del vostre treball per continuar",
+        )
 
-    return f"✅ **Estat**: Tot preparat! {len(files)} imatge{'s' if len(files) > 1 else ''} {'preparades' if len(files) > 1 else 'preparada'} per analitzar"
+    # All conditions met
+    return (
+        gr.update(interactive=True),
+        f"✅ **Estat**: Tot preparat! {len(files)} imatge{'s' if len(files) > 1 else ''} {'preparades' if len(files) > 1 else 'preparada'} per analitzar",
+    )
 
 
 def format_analysis_results(result, classification, files, image_info):
@@ -268,103 +298,9 @@ def format_analysis_results(result, classification, files, image_info):
 with gr.Blocks(
     title="AI Image Analysis",
     theme="Taithrah/Minimal",
-    css="""
-    /* Light gray background only for dropdown input field */
-    .visible-dropdown select,
-    .visible-dropdown input,
-    .visible-dropdown .gr-box,
-    .visible-dropdown .wrap {
-        background-color: #3b3b3b !important;
-        color: white !important;
-    }
-    
-    /* Change textbox focus background to 3b3b3b */
-    textarea:focus {
-        background-color: #3b3b3b !important;
-    }
-    
-    /* Change analyze button color */
-    .purple-button,
-    button[variant="primary"],
-    .gr-button-primary,
-    button.primary {
-        background-color: #611DD9 !important;
-        border-color: #611DD9 !important;
-        background: #611DD9 !important;
-    }
-    
-    .purple-button:hover,
-    button[variant="primary"]:hover,
-    .gr-button-primary:hover,
-    button.primary:hover {
-        background-color: #5016b3 !important;
-        border-color: #5016b3 !important;
-        background: #5016b3 !important;
-    }
-    
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-        .gradio-container {
-            padding: 10px !important;
-        }
-        
-        .gr-row {
-            flex-direction: column !important;
-        }
-        
-        .gr-column {
-            width: 100% !important;
-            margin-bottom: 15px !important;
-        }
-        
-        .gr-button {
-            width: 100% !important;
-            margin: 5px 0 !important;
-        }
-        
-        .gr-textbox, .gr-dropdown {
-            font-size: 16px !important; /* Prevents zoom on iOS */
-        }
-    }
-    
-    /* Accessibility improvements */
-    .gr-button:focus {
-        outline: 2px solid #611DD9 !important;
-        outline-offset: 2px !important;
-    }
-    
-    .gr-dropdown:focus, .gr-textbox:focus {
-        outline: 2px solid #611DD9 !important;
-        outline-offset: 1px !important;
-    }
-    
-    /* Better visual hierarchy */
-    .gr-markdown h1 {
-        color: #611DD9 !important;
-        border-bottom: 2px solid #611DD9 !important;
-        padding-bottom: 10px !important;
-    }
-    
-    .gr-markdown h2 {
-        color: #333 !important;
-        margin-top: 25px !important;
-    }
-    
-    /* Improved file upload area */
-    .large-upload-button {
-        border: 2px dashed #611DD9 !important;
-        border-radius: 10px !important;
-        background-color: rgba(97, 29, 217, 0.05) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .large-upload-button:hover {
-        background-color: rgba(97, 29, 217, 0.1) !important;
-        border-color: #5016b3 !important;
-    }
-    """,
+    css_paths=["static/styles.css"],
 ) as demo:
-    gr.Markdown("# 🎨 RosoUX Anàlisi d'Imatges")
+    gr.Markdown("# Anàlisi d'Imatges")
     gr.Markdown(
         "### Pugeu les vostres imatges i descobriu informació potenciada per IA per a contingut editorial i de xarxes socials"
     )
@@ -384,19 +320,21 @@ with gr.Blocks(
             files = gr.File(
                 file_count="multiple",
                 file_types=["image"],
-                label="📸 Afegir imatges (màxim 10)",
+                label=f"📸 Afegir imatges (màxim {MAX_IMAGES})",
                 height=200,
                 elem_classes="large-upload-button",
             )
         with gr.Column(scale=1):
-            image_counter = gr.Markdown(value="**Imatges**: 0/10", visible=True)
+            image_counter = gr.Markdown(
+                value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
+            )
 
     # Dynamic thumbnails and type selection dropdowns (up to 10 images)
     rows = []
     thumbnail_images = []
     type_dropdowns = []
 
-    for i in range(10):
+    for i in range(MAX_IMAGES):
         row = gr.Row(visible=False)
         rows.append(row)
 
@@ -405,11 +343,12 @@ with gr.Blocks(
                 thumbnail = gr.Image(
                     type="filepath",
                     label=f"Image {i + 1}",
-                    height=100,
-                    width=100,
+                    height=150,
+                    width=150,
                     visible=False,
                     interactive=False,
                     show_label=False,
+                    elem_classes=["thumbnail-container"],
                 )
                 thumbnail_images.append(thumbnail)
 
@@ -436,6 +375,7 @@ with gr.Blocks(
     status_message = gr.Markdown(
         value="📋 **Estat**: Prepareu-vos per començar - seleccioneu una classificació i pugeu imatges",
         visible=True,
+        elem_classes=["status-message"],
     )
 
     analyze_btn = gr.Button(
@@ -479,7 +419,7 @@ with gr.Blocks(
 
     for component in all_inputs:
         component.change(
-            fn=lambda *args: (check_button_state(*args), update_status_message(*args)),
+            fn=update_button_and_status,
             inputs=all_inputs,
             outputs=[analyze_btn, status_message],
         )
