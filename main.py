@@ -7,8 +7,8 @@ import requests
 # Constants
 MAX_IMAGES = 10
 OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llava-phi3:latest"
-TIMEOUT_SECONDS = 60
+OLLAMA_MODEL = "gemma3:4b"
+TIMEOUT_SECONDS = 600
 
 
 # Cache for base64 encoded images to avoid re-processing
