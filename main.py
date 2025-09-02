@@ -179,7 +179,15 @@ def update_type_dropdowns(files, classification):
     if classification == "Editorial":
         type_options = ["portada", "interior"]
     elif classification == "Social Network":
-        type_options = ["instagram artista", "instagram concurs", "twitter artista"]
+        type_options = [
+            "Instagram Artista",
+            "Instagram Concurs",
+            "Twitter Artista",
+            "Twitter Concurs",
+            "Newsletter",
+            "Logo",
+            "Capçalera",
+        ]
 
     row_updates = []
     image_updates = []
@@ -242,11 +250,23 @@ def auto_detect_image_type(filename, classification):
             if any(
                 word in filename_lower for word in ["contest", "concurs", "giveaway"]
             ):
-                return "instagram concurs"
-            return "instagram artista"
+                return "Instagram Concurs"
+            return "Instagram Artista"
         elif "twitter" in filename_lower:
-            return "twitter artista"
-        return "instagram artista"  # Default to Instagram artist
+            if any(
+                word in filename_lower for word in ["contest", "concurs", "giveaway"]
+            ):
+                return "Twitter Concurs"
+            return "Twitter Artista"
+        elif any(word in filename_lower for word in ["newsletter", "butlletí"]):
+            return "Newsletter"
+        elif any(word in filename_lower for word in ["logo", "logotip"]):
+            return "Logo"
+        elif any(
+            word in filename_lower for word in ["header", "capçalera", "capcelera"]
+        ):
+            return "Capçalera"
+        return "Instagram Artista"  # Default to Instagram artist
 
     return None
 
@@ -431,4 +451,4 @@ with gr.Blocks(
     )
 
 # demo.launch(share=True)
-demo.launch()
+demo.launch(debug=True)
