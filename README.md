@@ -14,6 +14,23 @@ To run this project, you need to have Python 3.13 or higher and `uv` installed. 
 uv sync
 ```
 
+## Configuration
+
+To use the AI-powered analysis, you need to set up your Google API key.
+
+1.  Obtain your API key from the [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  Set the `GOOGLE_API_KEY` environment variable. You can do this by creating a `.env` file in the root of the project with the following content:
+
+    ```
+    GOOGLE_API_KEY="your-api-key"
+    ```
+
+    Alternatively, you can set the environment variable directly in your terminal:
+
+    ```bash
+    export GOOGLE_API_KEY="your-api-key"
+    ```
+
 ## Usage
 
 To start the application, run the following command in your terminal:
