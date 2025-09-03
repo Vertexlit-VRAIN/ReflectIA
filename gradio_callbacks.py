@@ -118,19 +118,22 @@ def update_type_dropdowns(files, classification):
     image_count = len(files) if files else 0
     counter_text = f"**Imatges**: {image_count}/{MAX_IMAGES}"
 
+    # How many row containers we created in main.py
+    num_rows = (MAX_IMAGES + 1) // 2
+
+    # If no classification yet, hide everything
     if not classification:
-        # Return updates for counter, rows, images and dropdowns
         return (
             [counter_text]
-            + [gr.update(visible=False)] * MAX_IMAGES
-            + [gr.update(visible=False, value=None)] * MAX_IMAGES
-            + [gr.update(visible=False, choices=[], value=None)] * MAX_IMAGES
+            + [gr.update(visible=False)] * num_rows                # rows
+            + [gr.update(visible=False, value=None)] * MAX_IMAGES  # thumbs
+            + [gr.update(visible=False, choices=[], value=None)] * MAX_IMAGES  # dropdowns
         )
 
-    type_options = []
+    # Build choices for this classification
     if classification == "Editorial":
         type_options = ["portada", "interior"]
-    elif classification == "Social Network":
+    else:
         type_options = [
             "Instagram Artista",
             "Instagram Concurs",
@@ -141,46 +144,35 @@ def update_type_dropdowns(files, classification):
             "Capçalera",
         ]
 
-    row_updates = []
-    image_updates = []
-    dropdown_updates = []
+    # Prepare updates
+    row_updates = [gr.update(visible=False)] * num_rows
+    image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
+    dropdown_updates = [gr.update(visible=False, choices=[], value=None)] * MAX_IMAGES
 
-    if files:
-        for i in range(len(files)):
-            # Show row
-            row_updates.append(gr.update(visible=True))
-            # Show thumbnail image
-            image_updates.append(gr.update(visible=True, value=files[i]))
-            # Show dropdown with options and auto-detected value
-            filename = files[i].name if hasattr(files[i], "name") else f"Image {i + 1}"
-            if "/" in filename:
-                filename = filename.split("/")[-1]  # Get just the filename from path
+    # Show rows needed (ceil(count/2)), and fill each slot in order
+    for i in range(image_count):
+        row_idx = i // 2
+        if row_idx < num_rows:
+            row_updates[row_idx] = gr.update(visible=True)
 
-            # Auto-detect type based on filename
-            auto_type = auto_detect_image_type(filename, classification)
+        image_updates[i] = gr.update(visible=True, value=files[i])
 
-            dropdown_updates.append(
-                gr.update(
-                    visible=True,
-                    choices=type_options,
-                    value=auto_type if auto_type in type_options else None,
-                    label=f"Tipus per a {filename} {'(auto-detectat)' if auto_type else ''}",
-                )
-            )
+        # label + autodetect
+        filename = files[i].name if hasattr(files[i], "name") else f"Imatge {i + 1}"
+        if "/" in filename:
+            filename = filename.split("/")[-1]
 
-        # Hide unused components
-        for i in range(len(files), MAX_IMAGES):
-            row_updates.append(gr.update(visible=False))
-            image_updates.append(gr.update(visible=False, value=None))
-            dropdown_updates.append(gr.update(visible=False, choices=[], value=None))
-    else:
-        row_updates = [gr.update(visible=False)] * MAX_IMAGES
-        image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
-        dropdown_updates = [
-            gr.update(visible=False, choices=[], value=None)
-        ] * MAX_IMAGES
+        auto_type = auto_detect_image_type(filename, classification)
+
+        dropdown_updates[i] = gr.update(
+            visible=True,
+            choices=type_options,
+            value=auto_type if auto_type in type_options else None,
+            label=f"Tipus per a {filename} {'(auto-detectat)' if auto_type else ''}",
+        )
 
     return [counter_text] + row_updates + image_updates + dropdown_updates
+
 
 def auto_detect_image_type(filename, classification):
     """Auto-detect image type based on filename and classification"""
