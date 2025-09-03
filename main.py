@@ -30,97 +30,106 @@ def main():
             "### Pugeu les vostres imatges i descobriu informació potenciada per IA per a contingut editorial i de xarxes socials"
         )
 
-        user_id = gr.Textbox(
-            label="🧑‍🎓 Identificador d'Estudiant",
-            placeholder="Introduïu el vostre identificador únic...",
-            info="💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses."
-        )
-
-        # Image classification selection
-        classification = gr.Dropdown(
-            choices=["Editorial", "Social Network"],
-            label="📋 Classificació d'Imatges",
-            value=None,
-            elem_classes=["visible-dropdown"],
-            info="💡 Trieu 'Editorial' per revistes/llibres o 'Social Network' per contingut de xarxes socials",
-        )
-
-        # File upload with counter
-        with gr.Row():
-            with gr.Column(scale=4):
-                files = gr.File(
-                    file_count="multiple",
-                    file_types=["image"],
-                    label=f"📸 Afegir imatges (màxim {MAX_IMAGES})",
-                    height=200,
-                    elem_classes="large-upload-button",
-                )
-            with gr.Column(scale=1):
-                image_counter = gr.Markdown(
-                    value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
-                )
-
-        # Dynamic thumbnails and type selection dropdowns
-        rows = []
-        thumbnail_images = []
-        type_dropdowns = []
-
-        for i in range(MAX_IMAGES):
-            with gr.Row(visible=False) as row:
-                rows.append(row)
-                with gr.Column(scale=1):
-                    thumbnail = gr.Image(
-                        type="filepath",
-                        label=f"Image {i + 1}",
-                        height=150,
-                        width=150,
-                        visible=False,
-                        interactive=False,
-                        show_label=False,
-                        elem_classes=["thumbnail-container"],
+        with gr.Tabs():
+            with gr.TabItem("Anàlisi"):
+                with gr.Accordion("Entrada", open=True):
+                    user_id = gr.Textbox(
+                        label="🧑‍🎓 Identificador d'Estudiant",
+                        placeholder="Introduïu el vostre identificador únic...",
+                        info="💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses.",
                     )
-                    thumbnail_images.append(thumbnail)
 
-                with gr.Column(scale=2):
-                    dropdown = gr.Dropdown(
-                        choices=[],
-                        label=f"Tipus per a Imatge {i + 1}",
-                        visible=False,
+                    # Image classification selection
+                    classification = gr.Dropdown(
+                        choices=["Editorial", "Social Network"],
+                        label="📋 Classificació d'Imatges",
                         value=None,
                         elem_classes=["visible-dropdown"],
+                        info="💡 Trieu 'Editorial' per revistes/llibres o 'Social Network' per contingut de xarxes socials",
                     )
-                    type_dropdowns.append(dropdown)
 
-        # User description text field
-        user_description = gr.Textbox(
-            label="📝 Descripció",
-            placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges...\nExemple: 'Disseny per la campanya de primavera 2024' o 'Post promocional per a Instagram'",
-            lines=3,
-            max_lines=5,
-            info="💡 Descripció requerida per analitzar les imatges",
-        )
+                    # File upload with counter
+                    with gr.Row():
+                        with gr.Column(scale=4):
+                            files = gr.File(
+                                file_count="multiple",
+                                file_types=["image"],
+                                label=f"📸 Afegir imatges (màxim {MAX_IMAGES})",
+                                height=200,
+                                elem_classes="large-upload-button",
+                            )
+                        with gr.Column(scale=1):
+                            image_counter = gr.Markdown(
+                                value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
+                            )
 
-        # Status indicator
-        status_message = gr.Markdown(
-            value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
-            visible=True,
-            elem_classes=["status-message"],
-        )
+                    # Dynamic thumbnails and type selection dropdowns
+                    rows = []
+                    thumbnail_images = []
+                    type_dropdowns = []
 
-        analyze_btn = gr.Button(
-            "🔍 Analitzar Imatges",
-            variant="primary",
-            interactive=False,
-            size="lg",
-            elem_classes=["purple-button"],
-        )
+                    for i in range(MAX_IMAGES):
+                        with gr.Row(visible=False) as row:
+                            rows.append(row)
+                            with gr.Column(scale=1):
+                                thumbnail = gr.Image(
+                                    type="filepath",
+                                    label=f"Image {i + 1}",
+                                    height=150,
+                                    width=150,
+                                    visible=False,
+                                    interactive=False,
+                                    show_label=False,
+                                    elem_classes=["thumbnail-container"],
+                                )
+                                thumbnail_images.append(thumbnail)
 
-        # Bottom section - LLM response
-        gr.Markdown("## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"])
-        llm_output = gr.Markdown(
-            value="Pugeu imatges, seleccioneu classificació, especifiqueu el tipus per a cada imatge i després cliqueu '🔍 Analitzar Imatges'...",
-            elem_classes=["analysis-section", "llm-output"],  # keep llm-output if you still need it
-        )
+                            with gr.Column(scale=2):
+                                dropdown = gr.Dropdown(
+                                    choices=[],
+                                    label=f"Tipus per a Imatge {i + 1}",
+                                    visible=False,
+                                    value=None,
+                                    elem_classes=["visible-dropdown"],
+                                )
+                                type_dropdowns.append(dropdown)
+
+                    # User description text field
+                    user_description = gr.Textbox(
+                        label="📝 Descripció",
+                        placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges...\nExemple: 'Disseny per la campanya de primavera 2024' o 'Post promocional per a Instagram'",
+                        lines=3,
+                        max_lines=5,
+                        info="💡 Descripció requerida per analitzar les imatges",
+                    )
+
+                    # Status indicator
+                    status_message = gr.Markdown(
+                        value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
+                        visible=True,
+                        elem_classes=["status-message"],
+                    )
+
+                    analyze_btn = gr.Button(
+                        "🔍 Analitzar Imatges",
+                        variant="primary",
+                        interactive=False,
+                        size="lg",
+                        elem_classes=["purple-button"],
+                    )
+
+                # Bottom section - LLM response
+                gr.Markdown(
+                    "## 🤖 Resultats de l'Anàlisi IA",
+                    elem_classes=["analysis-section"],
+                )
+                llm_output = gr.Markdown(
+                    value="Pugeu imatges, seleccioneu classificació, especifiqueu el tipus per a cada imatge i després cliqueu '🔍 Analitzar Imatges'வுகளை...",
+                    elem_classes=["analysis-section", "llm-output"],
+                )
+            with gr.TabItem("Conversa"):
+                gr.Markdown("## 💬 Conversa amb l'Assistent IA")
+                gr.Markdown("Properament...")
 
         # --- Event Listeners ---
         all_outputs = [image_counter] + rows + thumbnail_images + type_dropdowns
