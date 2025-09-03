@@ -17,22 +17,23 @@ from config import (
 )
 
 
-def call_ai_model(provider, prompt, images_base64=None):
+def call_ai_model(provider, prompt, images_base64=None, history=None):
     """Call the specified AI model provider."""
     if provider == "ollama":
         return call_ollama_model(prompt, images_base64)
     elif provider == "gemini":
-        return call_gemini_model(prompt, images_base64)
+        return call_gemini_model(prompt, images_base64, history)
     else:
         return f"❌ **Error**: Proveïdor d'IA no reconegut: {provider}"
 
 
-def call_gemini_model(prompt, images_base64=None):
+def call_gemini_model(prompt, images_base64=None, history=None):
     """Call the Gemini API.
 
     Args:
         prompt (str): The text prompt for the model.
         images_base64 (list, optional): A list of base64 encoded images.
+        history (list, optional): A list of previous messages in the conversation.
 
     Returns:
         str: The response from the model or an error message.
@@ -46,6 +47,8 @@ def call_gemini_model(prompt, images_base64=None):
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel(GEMINI_MODEL)
 
+        chat = model.start_chat(history=history or [])
+
         content = [prompt]
         if images_base64:
             for img_b64 in images_base64:
@@ -56,7 +59,7 @@ def call_gemini_model(prompt, images_base64=None):
                 except Exception as e:
                     return f"❌ **Error**: No s'ha pogut processar una imatge per a Gemini. Error: {e}"
 
-        response = model.generate_content(content)
+        response = chat.send_message(content)
         return response.text
 
     except Exception as e:

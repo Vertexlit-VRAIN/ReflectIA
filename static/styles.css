@@ -134,3 +134,20 @@ button[variant="secondary"]:hover {
     border: none !important;
     font-size: 14px !important;
 }
+
+/* All text inside analysis section */
+.analysis-section,
+.analysis-section p,
+.analysis-section li {
+    font-size: 1.125rem !important;  /* ~18px */
+    line-height: 1.6 !important;
+}
+
+/* Headings inside */
+.analysis-section h1,
+.analysis-section h2,
+.analysis-section h3 {
+    font-size: 1.5rem !important;    /* ~24px */
+    line-height: 1.4 !important;
+}
+

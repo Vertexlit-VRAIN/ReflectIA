@@ -19,3 +19,26 @@ GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 # --- UI Configuration ---
 MAX_IMAGES = 10
+
+# --- Debugging ---
+DEBUG_MODE = False
+DEBUG_LLM_OUTPUT = """
+## Anàlisi d'Imatges de Prova
+
+Aquesta és una resposta de prova per a la depuració de la interfície.
+
+### Imatge 1: portada.jpg
+
+*   **Qualitat Visual**: Bona
+*   **Adequació**: Correcta
+*   **Recomanacions**:
+    *   Millorar el contrast del títol.
+    *   Utilitzar una imatge de més resolució.
+
+### Imatge 2: interior.jpg
+
+*   **Qualitat Visual**: Excel·lent
+*   **Adequació**: Perfecta
+*   **Recomanacions**:
+    *   Cap recomanació. El disseny és excel·lent.
+"""

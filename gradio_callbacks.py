@@ -4,32 +4,45 @@ Callback functions for the Gradio interface.
 
 import gradio as gr
 
-from config import AI_PROVIDER, MAX_IMAGES
+from config import AI_PROVIDER, MAX_IMAGES, DEBUG_MODE, DEBUG_LLM_OUTPUT
 from image_utils import encode_image_to_base64
 from ai_providers import call_ai_model
 
+conversation_history = {}
 
 def generate_llm_response(
+    user_id,
     files,
     classification,
     user_description,
     *type_selections,
     progress=gr.Progress()
 ):
-    progress(0, desc="Validant les dades d\'entrada...")
+    if DEBUG_MODE:
+        return DEBUG_LLM_OUTPUT
 
+    progress(0, desc="Validant les dades d'entrada...")
+
+    if files:
+        files = [f for f in files if f is not None]
     if not files:
-        return "❌ **Error**: Si us plau, pugeu almenys una imatge per a l\'anàlisi."
+        return "❌ **Error**: Si us plau, pugeu almenys una imatge per a l'anàlisi."
+
+    if not user_id:
+        return "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
 
     if not classification:
         return "❌ **Error**: Si us plau, seleccioneu primer una classificació."
 
-    # Filter out None values and check if we have type selections for all images
-    valid_types = [
-        t for t in type_selections[: len(files)] if t is not None and t != ""
-    ]
-    if len(valid_types) != len(files):
-        return f"❌ **Error**: Si us plau, especifiqueu el tipus per a totes les {len(files)} imatges pujades."
+    valid_files = []
+    valid_types = []
+    for i, file in enumerate(files):
+        if type_selections[i] is not None and type_selections[i] != "":
+            valid_files.append(file)
+            valid_types.append(type_selections[i])
+
+    if not valid_files:
+        return "❌ **Error**: Si us plau, especifiqueu el tipus per a almenys una imatge."
 
     progress(0.2, desc="Processant les imatges...")
 
@@ -37,10 +50,10 @@ def generate_llm_response(
     images_base64 = []
     image_info = []
 
-    for i, file in enumerate(files):
+    for i, file in enumerate(valid_files):
         progress(
-            0.2 + (0.3 * i / len(files)),
-            desc=f"Codificant imatge {i + 1} de {len(files)}...",
+            0.2 + (0.3 * i / len(valid_files)),
+            desc=f"Codificant imatge {i + 1} de {len(valid_files)}...",
         )
         if hasattr(file, "name"):
             image_path = file.name
@@ -58,7 +71,7 @@ def generate_llm_response(
             )
             image_info.append(f"{filename} - {valid_types[i]}")
         else:
-            return f"❌ **Error**: No s\'ha pogut processar la imatge {i + 1}"
+            return f"❌ **Error**: No s'ha pogut processar la imatge {i + 1}"
 
     # Create prompt for Ollama
     context = f"Classificació: {classification}"
@@ -80,10 +93,18 @@ Per a cada imatge, proporciona:
 Respon amb punts clars i concisos.
 """
 
-    progress(0.6, desc="Enviant petició al model d\'IA...")
+    progress(0.6, desc="Enviant petició al model d'IA...")
+
+    if user_id not in conversation_history:
+        conversation_history[user_id] = []
+
+    history = conversation_history[user_id]
 
     # Call AI model
-    result = call_ai_model(AI_PROVIDER, prompt, images_base64)
+    result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
+
+    history.append({"role": "user", "parts": [prompt]})
+    history.append({"role": "model", "parts": [result]})
 
     progress(1.0, desc="Anàlisi completada!")
 
@@ -92,6 +113,8 @@ Respon amb punts clars i concisos.
 
 
 def update_type_dropdowns(files, classification):
+    if files:
+        files = [f for f in files if f is not None]
     image_count = len(files) if files else 0
     counter_text = f"**Imatges**: {image_count}/{MAX_IMAGES}"
 
@@ -198,30 +221,37 @@ def auto_detect_image_type(filename, classification):
 
     return None
 
-def update_button_and_status(files, classification, user_description, *type_selections):
+def update_button_and_status(user_id, files, classification, user_description, *type_selections):
     """Combined function to update both button state and status message"""
     # Common validation logic
-    if not classification:
-        return (
-            gr.update(interactive=False),
-            "📋 **Estat**: Seleccioneu primer una classificació (Editorial o Social Network)",
-        )
-
+    if files:
+        files = [f for f in files if f is not None]
     if not files:
         return (
             gr.update(interactive=False),
             "📸 **Estat**: Pugeu una o més imatges per analitzar",
         )
 
+    if not user_id:
+        return (
+            gr.update(interactive=False),
+            "🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
+        )
+
+    if not classification:
+        return (
+            gr.update(interactive=False),
+            "📋 **Estat**: Seleccioneu primer una classificació (Editorial o Social Network)",
+        )
+
     valid_types = [
         t for t in type_selections[: len(files)] if t is not None and t != ""
     ]
 
-    if len(valid_types) < len(files):
-        missing_count = len(files) - len(valid_types)
+    if not valid_types:
         return (
             gr.update(interactive=False),
-            f"🏷️ **Estat**: Especifiqueu el tipus per a {missing_count} imatge{'s' if missing_count > 1 else ''} més",
+            f"🏷️ **Estat**: Especifiqueu el tipus per a almenys una de les imatges",
         )
 
     if not user_description or not user_description.strip():
@@ -233,7 +263,7 @@ def update_button_and_status(files, classification, user_description, *type_sele
     # All conditions met
     return (
         gr.update(interactive=True),
-        f"✅ **Estat**: Tot preparat! {len(files)} imatge{'s' if len(files) > 1 else ''} {'preparades' if len(files) > 1 else 'preparada'} per analitzar",
+        f"✅ **Estat**: Tot preparat! {len(valid_types)} imatge{'s' if len(valid_types) > 1 else ''} {'preparades' if len(valid_types) > 1 else 'preparada'} per analitzar",
     )
 
 def format_analysis_results(result, classification, files, image_info):

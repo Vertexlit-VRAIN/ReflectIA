@@ -30,6 +30,12 @@ def main():
             "### Pugeu les vostres imatges i descobriu informació potenciada per IA per a contingut editorial i de xarxes socials"
         )
 
+        user_id = gr.Textbox(
+            label="🧑‍🎓 Identificador d'Estudiant",
+            placeholder="Introduïu el vostre identificador únic...",
+            info="💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses."
+        )
+
         # Image classification selection
         classification = gr.Dropdown(
             choices=["Editorial", "Social Network"],
@@ -96,7 +102,7 @@ def main():
 
         # Status indicator
         status_message = gr.Markdown(
-            value="📋 **Estat**: Prepareu-vos per començar - seleccioneu una classificació i pugeu imatges",
+            value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
             visible=True,
             elem_classes=["status-message"],
         )
@@ -110,13 +116,10 @@ def main():
         )
 
         # Bottom section - LLM response
-        gr.Markdown("## 🤖 Resultats de l'Anàlisi IA")
-        llm_output = gr.Textbox(
-            label="📊 Anàlisi Detallada",
-            lines=15,
-            placeholder="Pugeu imatges, seleccioneu classificació, especifiqueu el tipus per a cada imatge i després cliqueu '🔍 Analitzar Imatges'வுகளை...",
-            interactive=False,
-            show_copy_button=True,
+        gr.Markdown("## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"])
+        llm_output = gr.Markdown(
+            value="Pugeu imatges, seleccioneu classificació, especifiqueu el tipus per a cada imatge i després cliqueu '🔍 Analitzar Imatges'...",
+            elem_classes=["analysis-section", "llm-output"],  # keep llm-output if you still need it
         )
 
         # --- Event Listeners ---
@@ -133,16 +136,16 @@ def main():
         )
 
         # Event listeners for button and status
-        for component in [files, classification, user_description] + type_dropdowns:
+        for component in [user_id, files, classification, user_description] + type_dropdowns:
             component.change(
                 fn=update_button_and_status,
-                inputs=[files, classification, user_description] + type_dropdowns,
+                inputs=[user_id, files, classification, user_description] + type_dropdowns,
                 outputs=[analyze_btn, status_message],
             )
 
         analyze_btn.click(
             fn=generate_llm_response,
-            inputs=[files, classification, user_description] + type_dropdowns,
+            inputs=[user_id, files, classification, user_description] + type_dropdowns,
             outputs=llm_output,
         )
 
