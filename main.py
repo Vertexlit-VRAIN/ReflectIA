@@ -18,6 +18,7 @@ from gradio_callbacks import (
 # --- Gradio Interface ---
 def main():
     """Launches the Gradio interface for the application."""
+    # Load your custom CSS
     with open("static/styles.css", "r", encoding="utf-8") as f:
         custom_css = f.read()
 
@@ -32,14 +33,17 @@ def main():
         )
 
         with gr.Tabs(elem_classes=["main-tabs"]):
+            # =========================
+            # TAB 1: ANÀLISI
+            # =========================
             with gr.TabItem("Anàlisi"):
-                # Accordion (we will close it on analyze)
+                # Accordion (we close it on analyze)
                 with gr.Accordion("Entrada", open=True) as input_accordion:
                     user_id = gr.Textbox(
                         label="🧑‍🎓 Identificador d'Estudiant",
                         placeholder="Introduïu el vostre identificador únic...",
                         info="💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses.",
-                        elem_classes=["emphasized-input", "with-info"],
+                        elem_classes=["emphasized-input"],
                     )
 
                     # Image classification
@@ -47,8 +51,8 @@ def main():
                         choices=["Editorial", "Social Network"],
                         label="📋 Classificació d'Imatges",
                         value=None,
-                        elem_classes=["visible-dropdown", "with-info"],
                         info="💡 Trieu 'Editorial' per revistes/llibres o 'Social Network' per contingut de xarxes socials",
+                        elem_classes=["visible-dropdown"],
                     )
 
                     # File upload + counter
@@ -59,7 +63,7 @@ def main():
                                 file_types=["image"],
                                 label=f"📸 Afegir imatges (màxim {MAX_IMAGES})",
                                 height=200,
-                                elem_classes="large-upload-button",
+                                elem_classes=["large-upload-button"],
                             )
                         with gr.Column(scale=1):
                             image_counter = gr.Markdown(
@@ -67,8 +71,6 @@ def main():
                             )
 
                     # ---------- PURE GRADIO LAYOUT: 2 COLUMNS ----------
-                    # Pre-create ceil(MAX_IMAGES/2) rows; each row has 2 slots.
-                    # Each slot = [thumbnail | dropdown] in two inner columns.
                     rows = []
                     thumbnail_images = []
                     type_dropdowns = []
@@ -102,7 +104,7 @@ def main():
                                 thumbnail_images.append(thumb_a)
                                 type_dropdowns.append(dd_a)
 
-                            # SLOT B (right) — only if exists
+                            # SLOT B (right)
                             with gr.Column(scale=1, min_width=360):
                                 with gr.Row():
                                     with gr.Column(scale=1, min_width=160):
@@ -137,7 +139,7 @@ def main():
                         lines=3,
                         max_lines=5,
                         info="💡 Descripció requerida per analitzar les imatges",
-                        elem_classes=["emphasized-input", "with-info"],
+                        elem_classes=["emphasized-input"],
                     )
 
                     # Status & button
@@ -155,7 +157,7 @@ def main():
                         elem_classes=["purple-button"],
                     )
 
-                # Results
+                # Results (use classes so your analysis typography applies)
                 gr.Markdown("## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"])
                 llm_output = gr.Markdown(
                     value=(
@@ -165,13 +167,74 @@ def main():
                     elem_classes=["analysis-section", "llm-output"],
                 )
 
+            # =========================
+            # TAB 2: CONVERSA (simple, with images)
+            # =========================
             with gr.TabItem("Conversa"):
                 gr.Markdown("## 💬 Conversa amb l'Assistent IA")
-                gr.Markdown("Properament...")
 
-        # -------- Wire events --------
-        # Order of outputs must match update_type_dropdowns return:
-        # [counter] + rows + thumbnails + dropdowns
+                
+        chat = gr.Chatbot(
+            type="messages",           # ✅ correct schema
+            label="Sessió de tutoria",
+            height=500,
+        )
+        composer = gr.MultimodalTextbox(
+            placeholder="Escriu un missatge o adjunta imatges…",
+            file_count="multiple",
+            file_types=["image"],
+            show_label=False,
+        )
+
+        def handle_user_message(message, history):
+            """
+            Gradio 'messages' format:
+              - For files: append one user message per file with content={"path": <file_path>}
+              - For text:  append one user message with content=<string>
+            """
+            history = history or []
+
+            # 1) Files -> normalize to list of file paths
+            file_paths = []
+            for f in (message.get("files") or []):
+                if isinstance(f, dict) and "path" in f:
+                    file_paths.append(f["path"])
+                elif hasattr(f, "name"):
+                    file_paths.append(f.name)
+                elif isinstance(f, str):
+                    file_paths.append(f)
+
+            # Append a user message for each image
+            for p in file_paths:
+                history.append({"role": "user", "content": {"path": p}})
+
+            # 2) Text -> append as its own user message (if present)
+            txt = ""
+            if isinstance(message, dict):
+                txt = (message.get("text") or "").strip()
+            elif isinstance(message, str):
+                txt = message.strip()
+
+            if txt:
+                history.append({"role": "user", "content": txt})
+
+            # (Optional) Show a placeholder assistant reply so the UI updates immediately
+            # Remove this block when you connect your real model.
+            history.append({
+                "role": "assistant",
+                "content": "(Vista prèvia — sense IA)",
+            })
+
+            # Clear the composer
+            return history, gr.update(value=None, interactive=True)
+
+        composer.submit(
+            fn=handle_user_message,
+            inputs=[composer, chat],
+            outputs=[chat, composer],
+        )
+
+        # -------- Events for Anàlisi tab --------
         all_outputs = [image_counter] + rows + thumbnail_images + type_dropdowns
 
         classification.change(

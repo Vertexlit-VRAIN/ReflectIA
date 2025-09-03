@@ -1,4 +1,4 @@
-/* ============ Theme accents ============ */
+/* ===================== Theme accents ===================== */
 .purple-button,
 button[variant="primary"],
 .gr-button-primary,
@@ -25,7 +25,7 @@ button.primary:hover {
 .gr-button:focus { outline: 2px solid #611DD9 !important; outline-offset: 2px !important; }
 .gr-dropdown:focus, .gr-textbox:focus { outline: 2px solid #611DD9 !important; outline-offset: 1px !important; }
 
-/* ============ Tabs (clear selected state) ============ */
+/* ===================== Tabs ===================== */
 .main-tabs [role="tab"] {
   background: #2a2a2a !important;
   color: #d8d8d8 !important;
@@ -51,7 +51,7 @@ button.primary:hover {
   padding-top: 16px !important;
 }
 
-/* ============ Inputs ============ */
+/* ===================== Inputs ===================== */
 .visible-dropdown select,
 .visible-dropdown input,
 .visible-dropdown .gr-box,
@@ -81,10 +81,9 @@ button.primary:hover {
   outline: none !important;
 }
 
-/* Info/help text (applies to ALL components; also scoped via .with-info to be safe) */
+/* Info/help text with comfy padding (apply via .with-info and globally as fallback) */
 .with-info .form-info,
 .with-info .wrap .info,
-.with-info .gr-form-info,
 .gradio-container .form-info,
 .gradio-container .wrap .info,
 .gradio-container [data-testid="block-info"],
@@ -98,7 +97,7 @@ button.primary:hover {
   display: block !important;
 }
 
-/* ============ Upload & thumbnails ============ */
+/* ===================== Upload & thumbnails ===================== */
 .large-upload-button {
   border: 2px dashed #611DD9 !important;
   border-radius: 10px !important;
@@ -121,7 +120,7 @@ button.primary:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
 }
 
-/* Status message */
+/* ===================== Status & analysis ===================== */
 .status-message {
   padding: 8px 12px !important;
   border-radius: 6px !important;
@@ -130,7 +129,6 @@ button.primary:hover {
   font-size: 14px !important;
 }
 
-/* Analysis section text size */
 .analysis-section, .analysis-section p, .analysis-section li {
   font-size: 1.15rem !important;
   line-height: 1.65 !important;
@@ -141,7 +139,58 @@ button.primary:hover {
 }
 .llm-output { font-size: 1.18rem !important; line-height: 1.7 !important; }
 
-/* Mobile tweaks */
+/* ===================== Conversa tab styling ===================== */
+/* Chat surface */
+.chatbot-surface .wrap,
+.chatbot-surface .gr-chatbot {
+  background: #121212 !important;
+  border: 1px solid #2b2b2b !important;
+  border-radius: 12px !important;
+}
+
+/* Chat message bubbles (fallback across Gradio versions) */
+.gr-chatbot .message,
+.chatbot-surface .message {
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  line-height: 1.5 !important;
+}
+
+/* User bubble */
+.gr-chatbot .message.user,
+.gr-chatbot .message.role-user,
+.chatbot-surface .message.user {
+  background: #1f1f1f !important;
+  border: 1px solid #3a3a3a !important;
+}
+
+/* Assistant bubble */
+.gr-chatbot .message.bot,
+.gr-chatbot .message.role-assistant,
+.chatbot-surface .message.bot {
+  background: #1a1533 !important;       /* subtle purple tint */
+  border: 1px solid #2c2359 !important;
+}
+
+/* Side cards */
+.card {
+  background: #161616 !important;
+  border: 1px solid #2b2b2b !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+}
+.card-title h3, .card-title h4 {
+  margin-top: 0 !important;
+  margin-bottom: 6px !important;
+}
+
+/* Chips */
+.chip {
+  border-radius: 9999px !important;
+  padding: 8px 12px !important;
+}
+
+/* ===================== Mobile tweaks ===================== */
 @media (max-width: 768px) {
   .gradio-container { padding: 10px !important; }
   .gr-button { width: 100% !important; margin: 5px 0 !important; }
