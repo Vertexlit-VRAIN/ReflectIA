@@ -196,3 +196,14 @@ button.primary:hover {
   .gr-button { width: 100% !important; margin: 5px 0 !important; }
   .gr-textbox, .gr-dropdown { font-size: 16px !important; } /* avoid iOS zoom */
 }
+
+/* Top bar + ID chip */
+.topbar { align-items: end; gap: 12px; }
+.id-echo { text-align: right; }
+.id-echo code { font-weight: 700; }
+
+/* ===== ID bar layout: center the activate button vertically ===== */
+.id-row { align-items: stretch !important; }             /* Make columns equal height */
+.id-button-col { display: flex !important; }             /* Turn right column into a flex box */
+.id-button-col > * { margin: auto 0 !important; }        /* Vertically center its child (the button) */
+.id-button-col .gr-button { width: 100% !important; }    /* Full width for a tidy look */

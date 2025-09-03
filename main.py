@@ -14,11 +14,13 @@ from gradio_callbacks import (
     update_type_dropdowns,
 )
 
+# Labels for the global ID accordion
+PENDING_LABEL = "🔴 ID pendent"
+ACTIVE_LABEL_PREFIX = "🟢 ID actiu: "
 
-# --- Gradio Interface ---
+
 def main():
-    """Launches the Gradio interface for the application."""
-    # Load your custom CSS
+    # Load custom CSS
     with open("static/styles.css", "r", encoding="utf-8") as f:
         custom_css = f.read()
 
@@ -27,35 +29,48 @@ def main():
         theme="Taithrah/Minimal",
         css=custom_css,
     ) as demo:
-        gr.Markdown("# Anàlisi d'Imatges")
-        gr.Markdown(
-            "### Pugeu les vostres imatges i descobriu informació potenciada per IA per a contingut editorial i de xarxes socials"
-        )
+        # Store the confirmed ID separately (don’t update on each keystroke)
+        active_user_id = gr.State("")
 
-        with gr.Tabs(elem_classes=["main-tabs"]):
+        # ---------- Global ID accordion (red by default) ----------
+        with gr.Accordion(PENDING_LABEL, open=True) as id_accordion:
+            with gr.Row(elem_classes=["id-row"]):
+                with gr.Column(scale=4, elem_classes=["with-info"]):
+                    gr.Markdown("#### 🧑‍🎓 Identificador d'Estudiant")
+                    gr.Markdown(
+                        "💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses."
+                    )
+                    user_id_input = gr.Textbox(
+                        placeholder="Escriu el teu ID…",
+                        show_label=False,
+                        lines=1,
+                        max_lines=1,
+                        elem_classes=["emphasized-input"],
+                    )
+                # Centered via CSS (.id-button-col)
+                with gr.Column(scale=1, elem_classes=["id-button-col"]):
+                    confirm_id_btn = gr.Button(
+                        "✓ Activar ID",
+                        variant="primary",
+                        size="lg",
+                        elem_classes=["purple-button"],
+                    )
+
+        # ---------- Tabs (hidden until ID is confirmed) ----------
+        with gr.Tabs(elem_classes=["main-tabs"], visible=False) as tabs_wrapper:
             # =========================
             # TAB 1: ANÀLISI
             # =========================
             with gr.TabItem("Anàlisi"):
-                # Accordion (we close it on analyze)
                 with gr.Accordion("Entrada", open=True) as input_accordion:
-                    user_id = gr.Textbox(
-                        label="🧑‍🎓 Identificador d'Estudiant",
-                        placeholder="Introduïu el vostre identificador únic...",
-                        info="💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses.",
-                        elem_classes=["emphasized-input"],
-                    )
-
-                    # Image classification
                     classification = gr.Dropdown(
                         choices=["Editorial", "Social Network"],
                         label="📋 Classificació d'Imatges",
                         value=None,
                         info="💡 Trieu 'Editorial' per revistes/llibres o 'Social Network' per contingut de xarxes socials",
-                        elem_classes=["visible-dropdown"],
+                        elem_classes=["visible-dropdown", "with-info"],
                     )
 
-                    # File upload + counter
                     with gr.Row():
                         with gr.Column(scale=4):
                             files = gr.File(
@@ -70,16 +85,15 @@ def main():
                                 value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
                             )
 
-                    # ---------- PURE GRADIO LAYOUT: 2 COLUMNS ----------
+                    # Pre-create slots (2 columns per row)
                     rows = []
                     thumbnail_images = []
                     type_dropdowns = []
-
                     for i in range(0, MAX_IMAGES, 2):
                         with gr.Row(visible=False) as row:
                             rows.append(row)
 
-                            # SLOT A (left)
+                            # Slot A
                             with gr.Column(scale=1, min_width=360):
                                 with gr.Row():
                                     with gr.Column(scale=1, min_width=160):
@@ -104,7 +118,7 @@ def main():
                                 thumbnail_images.append(thumb_a)
                                 type_dropdowns.append(dd_a)
 
-                            # SLOT B (right)
+                            # Slot B
                             with gr.Column(scale=1, min_width=360):
                                 with gr.Row():
                                     with gr.Column(scale=1, min_width=160):
@@ -129,7 +143,6 @@ def main():
                                 thumbnail_images.append(thumb_b)
                                 type_dropdowns.append(dd_b)
 
-                    # Description
                     user_description = gr.Textbox(
                         label="📝 Descripció",
                         placeholder=(
@@ -139,16 +152,14 @@ def main():
                         lines=3,
                         max_lines=5,
                         info="💡 Descripció requerida per analitzar les imatges",
-                        elem_classes=["emphasized-input"],
+                        elem_classes=["emphasized-input", "with-info"],
                     )
 
-                    # Status & button
                     status_message = gr.Markdown(
                         value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
                         visible=True,
                         elem_classes=["status-message"],
                     )
-
                     analyze_btn = gr.Button(
                         "🔍 Analitzar Imatges",
                         variant="primary",
@@ -157,7 +168,6 @@ def main():
                         elem_classes=["purple-button"],
                     )
 
-                # Results (use classes so your analysis typography applies)
                 gr.Markdown("## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"])
                 llm_output = gr.Markdown(
                     value=(
@@ -168,73 +178,115 @@ def main():
                 )
 
             # =========================
-            # TAB 2: CONVERSA (simple, with images)
+            # TAB 2: CONVERSA
             # =========================
             with gr.TabItem("Conversa"):
                 gr.Markdown("## 💬 Conversa amb l'Assistent IA")
+                gr.Markdown(
+                    "_Després de la primera anàlisi, el context s'utilitzarà aquí per continuar la tutoria._"
+                )
 
-                
-        chat = gr.Chatbot(
-            type="messages",           # ✅ correct schema
-            label="Sessió de tutoria",
-            height=500,
-        )
-        composer = gr.MultimodalTextbox(
-            placeholder="Escriu un missatge o adjunta imatges…",
-            file_count="multiple",
-            file_types=["image"],
-            show_label=False,
-        )
+                chat = gr.Chatbot(
+                    type="messages",     # ✅ correct schema
+                    label="Sessió de tutoria",
+                    height=600,
+                    elem_classes=["chatbot-surface"],
+                )
 
-        def handle_user_message(message, history):
+                # Allow images in chat; disabled until ID is confirmed
+                composer = gr.MultimodalTextbox(
+                    placeholder="Escriu un missatge o adjunta imatges…",
+                    file_count="multiple",
+                    file_types=["image"],
+                    show_label=False,
+                    interactive=False,
+                )
+
+                # === Handler (string, image, or both) — working format
+                def handle_user_message(message, history, uid):
+                    """
+                    Gradio 'messages' format (we stick to the working approach):
+                      - For files: append one user message per file with content={"path": <file_path>}
+                      - For text:  append one user message with content=<string>
+                      - For both:  images first (one per file), then text
+                    """
+                    history = history or []
+
+                    # Guard: ignore if ID not set (shouldn't happen since composer is disabled)
+                    if not (uid or "").strip():
+                        return history, gr.update(value=None)
+
+                    # 1) Files → normalize to file paths
+                    file_paths = []
+                    if isinstance(message, dict):
+                        for f in (message.get("files") or []):
+                            if isinstance(f, dict) and "path" in f:
+                                file_paths.append(f["path"])
+                            elif hasattr(f, "name"):
+                                file_paths.append(f.name)
+                            elif isinstance(f, str):
+                                file_paths.append(f)
+
+                    for p in file_paths:
+                        history.append({"role": "user", "content": {"path": p}})
+
+                    # 2) Text → separate user message
+                    txt = ""
+                    if isinstance(message, dict):
+                        txt = (message.get("text") or "").strip()
+                    elif isinstance(message, str):
+                        txt = message.strip()
+
+                    if txt:
+                        history.append({"role": "user", "content": txt})
+
+                    # Optional placeholder reply so UI updates
+                    history.append({"role": "assistant", "content": "(Vista prèvia — sense IA)"})
+
+                    # Clear composer
+                    return history, gr.update(value=None, interactive=True)
+
+                composer.submit(
+                    fn=handle_user_message,
+                    inputs=[composer, chat, active_user_id],
+                    outputs=[chat, composer],
+                )
+
+        # ---------- Functions wired AFTER all components exist ----------
+
+        def commit_id(uid_text):
             """
-            Gradio 'messages' format:
-              - For files: append one user message per file with content={"path": <file_path>}
-              - For text:  append one user message with content=<string>
+            Commit the ID only on button click / Enter:
+            - Green label + collapse if set
+            - Keep red and open if empty
+            - Show tabs & enable composer only when ID is valid
             """
-            history = history or []
+            uid = (uid_text or "").strip()
+            if uid:
+                acc_update = gr.update(label=f"{ACTIVE_LABEL_PREFIX}{uid}", open=False)
+            else:
+                acc_update = gr.update(label=PENDING_LABEL, open=True)
 
-            # 1) Files -> normalize to list of file paths
-            file_paths = []
-            for f in (message.get("files") or []):
-                if isinstance(f, dict) and "path" in f:
-                    file_paths.append(f["path"])
-                elif hasattr(f, "name"):
-                    file_paths.append(f.name)
-                elif isinstance(f, str):
-                    file_paths.append(f)
+            return (
+                acc_update,                      # id_accordion
+                gr.update(visible=bool(uid)),    # tabs_wrapper
+                gr.update(interactive=bool(uid)),# composer
+                uid,                             # active_user_id (State)
+            )
 
-            # Append a user message for each image
-            for p in file_paths:
-                history.append({"role": "user", "content": {"path": p}})
-
-            # 2) Text -> append as its own user message (if present)
-            txt = ""
-            if isinstance(message, dict):
-                txt = (message.get("text") or "").strip()
-            elif isinstance(message, str):
-                txt = message.strip()
-
-            if txt:
-                history.append({"role": "user", "content": txt})
-
-            # (Optional) Show a placeholder assistant reply so the UI updates immediately
-            # Remove this block when you connect your real model.
-            history.append({
-                "role": "assistant",
-                "content": "(Vista prèvia — sense IA)",
-            })
-
-            # Clear the composer
-            return history, gr.update(value=None, interactive=True)
-
-        composer.submit(
-            fn=handle_user_message,
-            inputs=[composer, chat],
-            outputs=[chat, composer],
+        # Confirm button and Enter submit — now that 'composer' exists, pass the component (not a string)
+        confirm_id_btn.click(
+            fn=commit_id,
+            inputs=[user_id_input],
+            outputs=[id_accordion, tabs_wrapper, composer, active_user_id],
+        )
+        user_id_input.submit(
+            fn=commit_id,
+            inputs=[user_id_input],
+            outputs=[id_accordion, tabs_wrapper, composer, active_user_id],
         )
 
-        # -------- Events for Anàlisi tab --------
+        # ---------- Anàlisi tab dynamics ----------
         all_outputs = [image_counter] + rows + thumbnail_images + type_dropdowns
 
         classification.change(
@@ -248,26 +300,22 @@ def main():
             outputs=all_outputs,
         )
 
-        # Enable button + live status
-        for component in [user_id, files, classification, user_description] + type_dropdowns:
+        # Enable button + live status (tied to CONFIRMED ID)
+        for component in [files, classification, user_description] + type_dropdowns:
             component.change(
                 fn=update_button_and_status,
-                inputs=[user_id, files, classification, user_description] + type_dropdowns,
+                inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
                 outputs=[analyze_btn, status_message],
             )
 
-        # Click: run analysis AND close the accordion
-        def analyze_and_close(
-            user_id, files, classification, user_description, *type_selections
-        ):
-            text = generate_llm_response(
-                user_id, files, classification, user_description, *type_selections
-            )
+        # Run analysis & close the "Entrada" accordion
+        def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
+            text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
             return text, gr.update(open=False)
 
         analyze_btn.click(
             fn=analyze_and_close,
-            inputs=[user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
             outputs=[llm_output, input_accordion],
         )
 
