@@ -307,3 +307,16 @@ button.primary:hover {
 }
 
 /* Full width for a tidy look */
+
+/* ===================== ID Accordion top margin ===================== */
+/* Add top margin to the ID accordion for better spacing from browser top */
+.gradio-container {
+  padding-top: 24px !important;
+}
+
+/* Alternative selectors to target the accordion */
+div[data-testid*="accordion"]:first-of-type,
+.gr-accordion:first-child,
+.gradio-container > div:first-child {
+  margin-top: 24px !important;
+}
