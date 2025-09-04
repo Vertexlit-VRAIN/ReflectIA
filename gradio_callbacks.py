@@ -7,8 +7,30 @@ import gradio as gr
 from config import AI_PROVIDER, MAX_IMAGES, DEBUG_MODE, DEBUG_LLM_OUTPUT
 from image_utils import encode_image_to_base64
 from ai_providers import call_ai_model
+from history_manager import load_history, save_history
 
-conversation_history = {}
+
+def history_to_gradio_messages(history):
+    """
+    Convert our internal history schema to Gradio Chatbot messages,
+    respecting the 'visible' flag.
+    """
+    msgs = []
+    for m in (history or []):
+        if not m.get("visible", True):
+            continue  # Skip messages marked as not visible
+
+        role = m.get("role", "user")
+        role = "assistant" if role in ("model", "assistant") else "user"
+        parts = m.get("parts") or []
+        texts = []
+        for p in parts:
+            if isinstance(p, str):
+                texts.append(p)
+        content = "\n\n".join(texts) if texts else "(missatge amb imatge)"
+        msgs.append({"role": role, "content": content})
+    return msgs
+
 
 def generate_llm_response(
     user_id,
@@ -19,6 +41,11 @@ def generate_llm_response(
     progress=gr.Progress()
 ):
     if DEBUG_MODE:
+        if user_id:
+            h = load_history(user_id) or []
+            h.append({"role": "user", "parts": ["(DEBUG) Sol·licitud d'anàlisi"], "visible": False})
+            h.append({"role": "model", "parts": [DEBUG_LLM_OUTPUT], "visible": False})
+            save_history(user_id, h)
         return DEBUG_LLM_OUTPUT
 
     progress(0, desc="Validant les dades d'entrada...")
@@ -46,7 +73,6 @@ def generate_llm_response(
 
     progress(0.2, desc="Processant les imatges...")
 
-    # Prepare images for Ollama
     images_base64 = []
     image_info = []
 
@@ -60,7 +86,6 @@ def generate_llm_response(
         else:
             image_path = str(file)
 
-        # Encode image to base64
         base64_result = encode_image_to_base64(image_path)
         if isinstance(base64_result, dict) and "error" in base64_result:
             return base64_result["error"]
@@ -71,46 +96,50 @@ def generate_llm_response(
             )
             image_info.append(f"{filename} - {valid_types[i]}")
         else:
-            return f"❌ **Error**: No s'ha pogut processar la imatge {i + 1}"
+            return f"❌ **Error**: No s\'ha pogut processar la imatge {i + 1}"
 
-    # Create prompt for Ollama
+    if classification == "Editorial":
+        prompt_file = "prompts/prompt_magazine_full.txt"
+    elif classification == "Social Network":
+        prompt_file = "prompts/prompt_social_full.txt"
+    else:
+        return "❌ **Error**: Classificació no vàlida."
+
+    try:
+        with open(prompt_file, "r", encoding="utf-8") as f:
+            base_prompt = f.read()
+    except FileNotFoundError:
+        return f"❌ **Error**: No s\'ha trobat el fitxer de prompt: {prompt_file}"
+
     context = f"Classificació: {classification}"
     if user_description and user_description.strip():
-        context += f"\nDescripció de l'usuari: {user_description.strip()}"
+        context += f"\nDescripció de l\'usuari: {user_description.strip()}"
 
     context += f"\nImatges a analitzar: {', '.join(image_info)}"
 
-    prompt = f"""
+    prompt = f'''{base_prompt}
+
+---
+### CONTEXT ADICIONAL DE L'ALUMNE:
 {context}
 
-Analitza aquestes imatges segons la classificació '{classification}' i proporciona una anàlisi detallada en català.
+Analitza les imatges proporcionades seguint les directrius del prompt anterior.
+'''
 
-Per a cada imatge, proporciona:
-- Una avaluació de la qualitat visual
-- Adequació per al tipus especificat ({', '.join(set(valid_types))})
-- Recomanacions específiques
+    progress(0.6, desc="Enviant petició al model d\'IA...")
 
-Respon amb punts clars i concisos.
-"""
+    history = load_history(user_id) or []
 
-    progress(0.6, desc="Enviant petició al model d'IA...")
-
-    if user_id not in conversation_history:
-        conversation_history[user_id] = []
-
-    history = conversation_history[user_id]
-
-    # Call AI model
     result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
 
-    history.append({"role": "user", "parts": [prompt]})
-    history.append({"role": "model", "parts": [result]})
+    history.append({"role": "user", "parts": [prompt], "visible": False})
+    history.append({"role": "model", "parts": [result], "visible": False})
+
+    save_history(user_id, history)
 
     progress(1.0, desc="Anàlisi completada!")
 
-    # Return simple result
     return format_analysis_results(result, classification, files, image_info)
-
 
 def update_type_dropdowns(files, classification):
     if files:
@@ -118,38 +147,37 @@ def update_type_dropdowns(files, classification):
     image_count = len(files) if files else 0
     counter_text = f"**Imatges**: {image_count}/{MAX_IMAGES}"
 
-    # How many row containers we created in main.py
     num_rows = (MAX_IMAGES + 1) // 2
 
-    # If no classification yet, hide everything
+    # ---- SAFE DEFAULTS when no classification selected ----
     if not classification:
-        return (
-            [counter_text]
-            + [gr.update(visible=False)] * num_rows                # rows
-            + [gr.update(visible=False, value=None)] * MAX_IMAGES  # thumbs
-            + [gr.update(visible=False, choices=[], value=None)] * MAX_IMAGES  # dropdowns
-        )
+        # rows hidden
+        row_updates = [gr.update(visible=False)] * num_rows
+        # all thumbs hidden and cleared
+        image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
+        # all dropdowns hidden, value cleared, but choices set to a harmless non-empty list
+        dropdown_updates = [
+            gr.update(visible=False, choices=["—"], value=None)
+        ] * MAX_IMAGES
+        return [counter_text] + row_updates + image_updates + dropdown_updates
 
-    # Build choices for this classification
+    # ---- Type options depending on classification ----
     if classification == "Editorial":
         type_options = ["portada", "interior"]
     else:
         type_options = [
-            "Instagram Artista",
-            "Instagram Concurs",
-            "Twitter Artista",
-            "Twitter Concurs",
-            "Newsletter",
-            "Logo",
-            "Capçalera",
+            "Instagram Artista", "Instagram Concurs",
+            "Twitter Artista", "Twitter Concurs",
+            "Newsletter", "Logo", "Capçalera",
         ]
 
-    # Prepare updates
+    # Start with everything hidden/cleared (safe)
     row_updates = [gr.update(visible=False)] * num_rows
     image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
-    dropdown_updates = [gr.update(visible=False, choices=[], value=None)] * MAX_IMAGES
+    # Hidden dropdowns -> visible=False, value=None, choices=["—"] (safe)
+    dropdown_updates = [gr.update(visible=False, choices=["—"], value=None)] * MAX_IMAGES
 
-    # Show rows needed (ceil(count/2)), and fill each slot in order
+    # Reveal only the needed slots, with real choices
     for i in range(image_count):
         row_idx = i // 2
         if row_idx < num_rows:
@@ -157,7 +185,6 @@ def update_type_dropdowns(files, classification):
 
         image_updates[i] = gr.update(visible=True, value=files[i])
 
-        # label + autodetect
         filename = files[i].name if hasattr(files[i], "name") else f"Imatge {i + 1}"
         if "/" in filename:
             filename = filename.split("/")[-1]
@@ -173,9 +200,7 @@ def update_type_dropdowns(files, classification):
 
     return [counter_text] + row_updates + image_updates + dropdown_updates
 
-
 def auto_detect_image_type(filename, classification):
-    """Auto-detect image type based on filename and classification"""
     if not classification:
         return None
 
@@ -186,7 +211,7 @@ def auto_detect_image_type(filename, classification):
             return "portada"
         elif any(word in filename_lower for word in ["inside", "interior", "page"]):
             return "interior"
-        return "portada"  # Default to cover
+        return "portada"
 
     elif classification == "Social Network":
         if "instagram" in filename_lower:
@@ -209,13 +234,11 @@ def auto_detect_image_type(filename, classification):
             word in filename_lower for word in ["header", "capçalera", "capcelera"]
         ):
             return "Capçalera"
-        return "Instagram Artista"  # Default to Instagram artist
+        return "Instagram Artista"
 
     return None
 
 def update_button_and_status(user_id, files, classification, user_description, *type_selections):
-    """Combined function to update both button state and status message"""
-    # Common validation logic
     if files:
         files = [f for f in files if f is not None]
     if not files:
@@ -227,7 +250,7 @@ def update_button_and_status(user_id, files, classification, user_description, *
     if not user_id:
         return (
             gr.update(interactive=False),
-            "🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
+            "🧑‍🎓 **Estat**: Introduïu el vostre identificador d\'estudiant per començar",
         )
 
     if not classification:
@@ -252,12 +275,78 @@ def update_button_and_status(user_id, files, classification, user_description, *
             "📝 **Estat**: Afegiu una descripció del vostre treball per continuar",
         )
 
-    # All conditions met
     return (
         gr.update(interactive=True),
-        f"✅ **Estat**: Tot preparat! {len(valid_types)} imatge{'s' if len(valid_types) > 1 else ''} {'preparades' if len(valid_types) > 1 else 'preparada'} per analitzar",
+        f"✅ **Estat**: Tot preparat! {len(valid_types)} imatge{'s' if len(valid_types) > 1 else ''} {'preparades' if len(valid_types) > 1 else 'preparada'} per analitzar"
     )
 
 def format_analysis_results(result, classification, files, image_info):
-    """Format the LLM results as plain text"""
     return result
+
+def handle_conversation_message(message, history, user_id):
+    """
+    Handles messages from the conversation tab.
+    """
+    if not user_id:
+        gr.Warning("Error: No s\'ha trobat l\'identificador d\'usuari.")
+        return history, gr.update(value=None)
+
+    history = load_history(user_id) or []
+
+    try:
+        with open("prompts/prompt_conversation.txt", "r", encoding="utf-8") as f:
+            conversation_prompt = f.read()
+    except FileNotFoundError:
+        gr.Warning("Error: No s\'ha trobat el fitxer de prompt de conversa.")
+        return history, gr.update(value=None)
+
+    # Prepend the conversational prompt if it's the first conversational message
+    is_first_conversation = not any(m.get('visible', False) for m in history)
+    if is_first_conversation:
+        system_prompt = [
+            {"role": "user", "parts": [conversation_prompt], "visible": False},
+            {"role": "model", "parts": ["Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."], "visible": True}
+        ]
+        history.extend(system_prompt)
+
+    user_parts = []
+    images_base64 = []
+
+    text_input = ""
+    if isinstance(message, dict):
+        text_input = (message.get("text") or "").strip()
+    elif isinstance(message, str):
+        text_input = message.strip()
+
+    if text_input:
+        user_parts.append(text_input)
+
+    if isinstance(message, dict):
+        for file_obj in (message.get("files") or []):
+            file_path = file_obj if isinstance(file_obj, str) else file_obj.get("path")
+            if file_path:
+                img_bytes = encode_image_to_base64(file_path)
+                if "error" not in img_bytes:
+                    user_parts.append(img_bytes)
+                    images_base64.append(img_bytes)
+                else:
+                    gr.Warning(f"Error processing image: {img_bytes['error']}")
+
+    if not user_parts:
+        return history_to_gradio_messages(history), gr.update(value=None)
+
+    history.append({"role": "user", "parts": user_parts, "visible": True})
+
+    if DEBUG_MODE:
+        response = (
+            "🧪 **Mode debug**\n\n"
+            f"Text rebut: {text_input or '(cap text)'}\n"
+            f"Imatges adjuntes: {len(images_base64)}"
+        )
+    else:
+        response = call_ai_model(AI_PROVIDER, "", images_base64=images_base64, history=history)
+
+    history.append({"role": "model", "parts": [response], "visible": True})
+    save_history(user_id, history)
+
+    return history_to_gradio_messages(history), gr.update(value=None, interactive=True)

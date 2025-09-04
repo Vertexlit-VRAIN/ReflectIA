@@ -16,6 +16,16 @@ from config import (
     TIMEOUT_SECONDS,
 )
 
+def clean_history_for_api(history):
+    """Remove custom keys (like 'visible') from history before sending to the API."""
+    if not history:
+        return []
+    cleaned_history = []
+    for message in history:
+        # Create a new dict without the 'visible' key
+        cleaned_message = {k: v for k, v in message.items() if k != 'visible'}
+        cleaned_history.append(cleaned_message)
+    return cleaned_history
 
 def call_ai_model(provider, prompt, images_base64=None, history=None):
     """Call the specified AI model provider."""
@@ -25,7 +35,6 @@ def call_ai_model(provider, prompt, images_base64=None, history=None):
         return call_gemini_model(prompt, images_base64, history)
     else:
         return f"❌ **Error**: Proveïdor d'IA no reconegut: {provider}"
-
 
 def call_gemini_model(prompt, images_base64=None, history=None):
     """Call the Gemini API.
@@ -47,7 +56,10 @@ def call_gemini_model(prompt, images_base64=None, history=None):
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel(GEMINI_MODEL)
 
-        chat = model.start_chat(history=history or [])
+        # Remove custom keys from history before sending to the API
+        api_history = clean_history_for_api(history)
+
+        chat = model.start_chat(history=api_history or [])
 
         content = [prompt]
         if images_base64:
@@ -65,13 +77,11 @@ def call_gemini_model(prompt, images_base64=None, history=None):
     except Exception as e:
         return f"❌ **Error Inesperat amb Gemini**: {e}"
 
-
 def call_ollama_model(prompt, images_base64=None):
     """Call local Ollama model"""
     try:
         payload = {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False}
 
-        # Add images if provided
         if images_base64:
             payload["images"] = images_base64
 
