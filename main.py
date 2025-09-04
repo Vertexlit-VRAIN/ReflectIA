@@ -102,10 +102,10 @@ def main():
             with gr.TabItem("Anàlisi"):
                 with gr.Accordion("Entrada", open=True) as input_accordion:
                     classification = gr.Dropdown(
-                        choices=["Editorial", "Social Network"],
+                        choices=["Pràctica 1. Revista", "Pràctica 2. Xarxes Socials"],
                         label="📋 Classificació d'Imatges",
                         value=None,
-                        info="💡 Trieu 'Editorial' per revistes/llibres o 'Social Network' per contingut de xarxes socials",
+                        info="💡 Trieu una de les dues pràctiques",
                         elem_classes=["visible-dropdown", "with-info"],
                     )
                     with gr.Row():
