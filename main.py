@@ -10,16 +10,16 @@ import gradio as gr
 from config import MAX_IMAGES
 from gradio_callbacks import (
     generate_llm_response,
-    update_button_and_status,
-    update_type_dropdowns,
     handle_conversation_message,
     history_to_gradio_messages,
+    update_button_and_status,
+    update_type_dropdowns,
 )
 from history_manager import load_history
 
 # Labels for the global ID accordion
 PENDING_LABEL = "🔴 ID pendent"
-ACTIVE_LABEL_PREFIX = "🟢 ID actiu: "
+ACTIVE_LABEL_PREFIX = "🟢 ID actiu"
 
 
 def _load_custom_css(path: str) -> str:
@@ -36,16 +36,25 @@ def commit_id(uid_text):
     chat_messages = history_to_gradio_messages(history)
 
     if uid:
-        acc_update = gr.update(label=f"{ACTIVE_LABEL_PREFIX}{uid}", open=False)
+        acc_update = gr.update(label=f"{ACTIVE_LABEL_PREFIX}", open=False)
+        content_update = gr.update(value=f"**{uid}**", visible=True)
+        input_update = gr.update(visible=False)  # hide text input
+        button_update = gr.update(visible=False)  # hide button
     else:
         acc_update = gr.update(label=PENDING_LABEL, open=True)
+        content_update = gr.update(visible=False)
+        input_update = gr.update(visible=True)  # show text input
+        button_update = gr.update(visible=True)  # show button
 
     return (
-        acc_update,                   # accordion update
-        gr.update(visible=bool(uid)), # tabs visibility
-        gr.update(interactive=bool(uid)), # composer active
-        uid,                          # active_user_id
-        chat_messages,                # chat history formatted for Chatbot
+        acc_update,  # accordion update
+        gr.update(visible=bool(uid)),  # tabs visibility
+        gr.update(interactive=bool(uid)),  # composer active
+        uid,  # active_user_id
+        chat_messages,  # chat history formatted for Chatbot
+        input_update,  # user_id_input visibility
+        button_update,  # confirm_id_btn visibility
+        content_update,  # id_content update
     )
 
 
@@ -59,7 +68,9 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
 def main():
     custom_css = _load_custom_css("static/styles.css")
 
-    with gr.Blocks(title="AI Image Analysis", theme="Taithrah/Minimal", css=custom_css) as demo:
+    with gr.Blocks(
+        title="AI Image Analysis", theme="Taithrah/Minimal", css=custom_css
+    ) as demo:
         active_user_id = gr.State("")
 
         # ---------- Global ID accordion ----------
@@ -67,7 +78,10 @@ def main():
             with gr.Row(elem_classes=["id-row"]):
                 with gr.Column(scale=4, elem_classes=["with-info"]):
                     gr.Markdown("#### 🧑‍🎓 Identificador d'Estudiant")
-                    gr.Markdown("💡 Aquest identificador s'utilitzarà per desar i recuperar les vostres converses.")
+                    id_content = gr.Markdown(
+                        "",
+                        visible=False,
+                    )
                     user_id_input = gr.Textbox(
                         placeholder="Escriu el teu ID…",
                         show_label=False,
@@ -75,9 +89,11 @@ def main():
                         max_lines=1,
                         elem_classes=["emphasized-input"],
                     )
-                with gr.Column(scale=1, elem_classes=["id-button-col"]):
                     confirm_id_btn = gr.Button(
-                        "✓ Activar ID", variant="primary", size="lg", elem_classes=["purple-button"]
+                        "✓ Activar ID",
+                        variant="primary",
+                        size="lg",
+                        elem_classes=["purple-button"],
                     )
 
         # ---------- Tabs ----------
@@ -102,7 +118,9 @@ def main():
                                 elem_classes=["large-upload-button"],
                             )
                         with gr.Column(scale=1):
-                            image_counter = gr.Markdown(value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True)
+                            image_counter = gr.Markdown(
+                                value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
+                            )
 
                     rows, thumbnail_images, type_dropdowns = [], [], []
                     for i in range(0, MAX_IMAGES, 2):
@@ -123,8 +141,12 @@ def main():
                                         )
                                     with gr.Column(scale=1, min_width=180):
                                         dd_a = gr.Dropdown(
-                                            choices=[], label=f"Tipus per a Imatge {i + 1}",
-                                            value=None, visible=False, elem_classes=["visible-dropdown"], allow_custom_value=True,
+                                            choices=[],
+                                            label=f"Tipus per a Imatge {i + 1}",
+                                            value=None,
+                                            visible=False,
+                                            elem_classes=["visible-dropdown"],
+                                            allow_custom_value=True,
                                         )
                                 thumbnail_images.append(thumb_a)
                                 type_dropdowns.append(dd_a)
@@ -143,8 +165,12 @@ def main():
                                         )
                                     with gr.Column(scale=1, min_width=180):
                                         dd_b = gr.Dropdown(
-                                            choices=[], label=f"Tipus per a Imatge {i + 2}",
-                                            value=None, visible=False, elem_classes=["visible-dropdown"], allow_custom_value=True,
+                                            choices=[],
+                                            label=f"Tipus per a Imatge {i + 2}",
+                                            value=None,
+                                            visible=False,
+                                            elem_classes=["visible-dropdown"],
+                                            allow_custom_value=True,
                                         )
                                 thumbnail_images.append(thumb_b)
                                 type_dropdowns.append(dd_b)
@@ -163,10 +189,16 @@ def main():
                         elem_classes=["status-message"],
                     )
                     analyze_btn = gr.Button(
-                        "🔍 Analitzar Imatges", variant="primary", interactive=False, size="lg", elem_classes=["purple-button"]
+                        "🔍 Analitzar Imatges",
+                        variant="primary",
+                        interactive=False,
+                        size="lg",
+                        elem_classes=["purple-button"],
                     )
 
-                gr.Markdown("## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"])
+                gr.Markdown(
+                    "## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"]
+                )
                 llm_output = gr.Markdown(
                     value="Pugeu imatges, seleccioneu classificació i cliqueu '🔍 Analitzar Imatges'...",
                     elem_classes=["analysis-section", "llm-output"],
@@ -175,8 +207,15 @@ def main():
             # ----- Tab: Conversa -----
             with gr.TabItem("Conversa"):
                 gr.Markdown("## 💬 Conversa amb l'Assistent IA")
-                gr.Markdown("_Després de la primera anàlisi, el context s'utilitzarà aquí per continuar la tutoria._")
-                chat = gr.Chatbot(type="messages", label="Sessió de tutoria", height=600, elem_classes=["chatbot-surface"])
+                gr.Markdown(
+                    "_Després de la primera anàlisi, el context s'utilitzarà aquí per continuar la tutoria._"
+                )
+                chat = gr.Chatbot(
+                    type="messages",
+                    label="Sessió de tutoria",
+                    height=600,
+                    elem_classes=["chatbot-surface"],
+                )
                 composer = gr.MultimodalTextbox(
                     placeholder="Escriu un missatge o adjunta imatges…",
                     file_count="multiple",
@@ -184,12 +223,41 @@ def main():
                     show_label=False,
                     interactive=False,
                 )
-                composer.submit(fn=handle_conversation_message, inputs=[composer, chat, active_user_id], outputs=[chat, composer])
+                composer.submit(
+                    fn=handle_conversation_message,
+                    inputs=[composer, chat, active_user_id],
+                    outputs=[chat, composer],
+                )
 
         # ---------- Event wiring ----------
-        confirm_id_btn.click(fn=commit_id, inputs=[user_id_input], outputs=[id_accordion, tabs_wrapper, composer, active_user_id, chat])
-        user_id_input.submit(fn=commit_id, inputs=[user_id_input], outputs=[id_accordion, tabs_wrapper, composer, active_user_id, chat])
-
+        confirm_id_btn.click(
+            fn=commit_id,
+            inputs=[user_id_input],
+            outputs=[
+                id_accordion,
+                tabs_wrapper,
+                composer,
+                active_user_id,
+                chat,
+                user_id_input,
+                confirm_id_btn,
+                id_content,
+            ],
+        )
+        user_id_input.submit(
+            fn=commit_id,
+            inputs=[user_id_input],
+            outputs=[
+                id_accordion,
+                tabs_wrapper,
+                composer,
+                active_user_id,
+                chat,
+                user_id_input,
+                confirm_id_btn,
+                id_content,
+            ],
+        )
 
         all_outputs = [image_counter] + rows + thumbnail_images + type_dropdowns
 
@@ -200,7 +268,8 @@ def main():
             outputs=all_outputs,
         ).then(
             fn=update_button_and_status,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[analyze_btn, status_message],
         )
 
@@ -211,20 +280,23 @@ def main():
             outputs=all_outputs,
         ).then(
             fn=update_button_and_status,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[analyze_btn, status_message],
         )
 
         for component in [files, classification, user_description] + type_dropdowns:
             component.change(
                 fn=update_button_and_status,
-                inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+                inputs=[active_user_id, files, classification, user_description]
+                + type_dropdowns,
                 outputs=[analyze_btn, status_message],
             )
 
         analyze_btn.click(
             fn=analyze_and_close,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[llm_output, input_accordion, chat],
         )
 
