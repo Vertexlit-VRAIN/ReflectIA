@@ -1,10 +1,12 @@
 """
 Manages loading and saving of conversation history to JSON files.
 """
+
 import json
 import os
 
 MESSAGES_DIR = "messages"
+
 
 def load_history(user_id):
     """
@@ -15,7 +17,7 @@ def load_history(user_id):
 
     Returns:
         list or None: A list representing the conversation history if the file
-                      exists, otherwise None.
+        exists, otherwise None.
     """
     if not user_id:
         return None
@@ -29,6 +31,7 @@ def load_history(user_id):
         except (json.JSONDecodeError, IOError):
             return None  # Return None if file is corrupted or unreadable
     return None
+
 
 def save_history(user_id, history):
     """

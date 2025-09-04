@@ -23,7 +23,7 @@ GEMINI_MODEL = "gemini-2.5-flash-lite"
 MAX_IMAGES = 20
 
 # --- Debugging ---
-DEBUG_MODE = True
+DEBUG_MODE = False
 DEBUG_LLM_OUTPUT = """
 ## Anàlisi d'Imatges de Prova
 
