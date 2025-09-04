@@ -98,9 +98,9 @@ def generate_llm_response(
         else:
             return f"❌ **Error**: No s\'ha pogut processar la imatge {i + 1}"
 
-    if classification == "Editorial":
+    if classification == "Pràctica 1. Revista":
         prompt_file = "prompts/prompt_magazine_full.txt"
-    elif classification == "Social Network":
+    elif classification == "Pràctica 2. Xarxes Socials":
         prompt_file = "prompts/prompt_social_full.txt"
     else:
         return "❌ **Error**: Classificació no vàlida."
@@ -162,14 +162,16 @@ def update_type_dropdowns(files, classification):
         return [counter_text] + row_updates + image_updates + dropdown_updates
 
     # ---- Type options depending on classification ----
-    if classification == "Editorial":
-        type_options = ["portada", "interior"]
-    else:
+    if classification == "Pràctica 1. Revista":
+        type_options = ["Portada", "Interior"]
+    elif classification == "Pràctica 2. Xarxes Socials":
         type_options = [
             "Instagram Artista", "Instagram Concurs",
             "Twitter Artista", "Twitter Concurs",
             "Newsletter", "Logo", "Capçalera",
         ]
+    else:
+        type_options = ["—"]
 
     # Start with everything hidden/cleared (safe)
     row_updates = [gr.update(visible=False)] * num_rows
@@ -189,54 +191,16 @@ def update_type_dropdowns(files, classification):
         if "/" in filename:
             filename = filename.split("/")[-1]
 
-        auto_type = auto_detect_image_type(filename, classification)
-
         dropdown_updates[i] = gr.update(
             visible=True,
             choices=type_options,
-            value=auto_type if auto_type in type_options else None,
-            label=f"Tipus per a {filename} {'(auto-detectat)' if auto_type else ''}",
+            value=None,
+            label=f"Tipus per a {filename}",
         )
 
     return [counter_text] + row_updates + image_updates + dropdown_updates
 
-def auto_detect_image_type(filename, classification):
-    if not classification:
-        return None
-
-    filename_lower = filename.lower()
-
-    if classification == "Editorial":
-        if any(word in filename_lower for word in ["cover", "portada", "front"]):
-            return "portada"
-        elif any(word in filename_lower for word in ["inside", "interior", "page"]):
-            return "interior"
-        return "portada"
-
-    elif classification == "Social Network":
-        if "instagram" in filename_lower:
-            if any(
-                word in filename_lower for word in ["contest", "concurs", "giveaway"]
-            ):
-                return "Instagram Concurs"
-            return "Instagram Artista"
-        elif "twitter" in filename_lower:
-            if any(
-                word in filename_lower for word in ["contest", "concurs", "giveaway"]
-            ):
-                return "Twitter Concurs"
-            return "Twitter Artista"
-        elif any(word in filename_lower for word in ["newsletter", "butlletí"]):
-            return "Newsletter"
-        elif any(word in filename_lower for word in ["logo", "logotip"]):
-            return "Logo"
-        elif any(
-            word in filename_lower for word in ["header", "capçalera", "capcelera"]
-        ):
-            return "Capçalera"
-        return "Instagram Artista"
-
-    return None
+# Removed auto_detect_image_type function - users must classify manually
 
 def update_button_and_status(user_id, files, classification, user_description, *type_selections):
     if files:
