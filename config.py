@@ -1,7 +1,9 @@
 """
 Configuration constants for the application.
 """
+
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,7 +20,7 @@ GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 
 # --- UI Configuration ---
-MAX_IMAGES = 10
+MAX_IMAGES = 20
 
 # --- Debugging ---
 DEBUG_MODE = True
