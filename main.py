@@ -59,10 +59,18 @@ def commit_id(uid_text):
 
 
 def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
+    # First return loading state with more content to override Gradio's default behavior
+    yield (
+        "**Analitzant les imatges..., espereu un moment**",
+        gr.update(open=False),
+        [],
+    )
+
+    # Then process and return results
     text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
     history = load_history(uid) or []
     chat_messages = history_to_gradio_messages(history)
-    return text, gr.update(open=False), chat_messages
+    yield text, gr.update(open=False), chat_messages
 
 
 def main():
@@ -180,7 +188,7 @@ def main():
                         placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges…",
                         lines=3,
                         max_lines=5,
-                        info="💡 Descripció requerida per analitzar les imatges",
+                        info="💡 Descripció",
                         elem_classes=["emphasized-input", "with-info"],
                     )
                     status_message = gr.Markdown(

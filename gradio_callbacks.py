@@ -54,7 +54,6 @@ def generate_llm_response(
             save_history(user_id, h)
         return DEBUG_LLM_OUTPUT
 
-    progress(0, desc="Validant les dades d'entrada...")
 
     if files:
         files = [f for f in files if f is not None]
@@ -81,16 +80,10 @@ def generate_llm_response(
             "❌ **Error**: Si us plau, especifiqueu el tipus per a almenys una imatge."
         )
 
-    progress(0.2, desc="Processant les imatges...")
-
     images_base64 = []
     image_info = []
 
     for i, file in enumerate(valid_files):
-        progress(
-            0.2 + (0.3 * i / len(valid_files)),
-            desc=f"Codificant imatge {i + 1} de {len(valid_files)}...",
-        )
         if hasattr(file, "name"):
             image_path = file.name
         else:
@@ -136,8 +129,6 @@ def generate_llm_response(
 Analitza les imatges proporcionades seguint les directrius del prompt anterior.
 """
 
-    progress(0.6, desc="Enviant petició al model d'IA...")
-
     history = load_history(user_id) or []
 
     result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
@@ -146,8 +137,6 @@ Analitza les imatges proporcionades seguint les directrius del prompt anterior.
     history.append({"role": "model", "parts": [result], "visible": False})
 
     save_history(user_id, history)
-
-    progress(1.0, desc="Anàlisi completada!")
 
     return format_analysis_results(result, classification, files, image_info)
 

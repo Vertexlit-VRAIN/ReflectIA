@@ -199,6 +199,36 @@ button.primary:hover {
   line-height: 1.7 !important;
 }
 
+/* Hide blinking cursor and loading animations in analysis section */
+.llm-output *,
+.analysis-section * {
+  cursor: default !important;
+}
+
+.llm-output::before,
+.llm-output::after,
+.analysis-section::before,
+.analysis-section::after {
+  display: none !important;
+}
+
+/* Hide any Gradio loading cursors */
+.gr-markdown::before,
+.gr-markdown::after {
+  display: none !important;
+}
+
+/* Custom loading animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.llm-output .gr-markdown:has-text("Analitzant"),
+.llm-output .gr-markdown:contains("Analitzant") {
+  animation: pulse 2s infinite !important;
+}
+
 /* ===================== Conversa tab styling ===================== */
 /* Chat surface */
 .chatbot-surface .wrap,
