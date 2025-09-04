@@ -1,3 +1,33 @@
+/* ===================== Global font sizes ===================== */
+.gradio-container,
+.gradio-container p,
+.gradio-container div,
+.gradio-container span,
+.gradio-container label,
+.gr-form,
+.gr-textbox,
+.gr-dropdown,
+.gr-button {
+  font-size: 1.1rem !important;
+}
+
+.gr-markdown,
+.gr-markdown p {
+  font-size: 1.2rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Chat messages */
+.gr-chatbot .message,
+.chatbot-surface .message {
+  font-size: 1.15rem !important;
+}
+
+/* Tab labels */
+.main-tabs [role="tab"] {
+  font-size: 1.05rem !important;
+}
+
 /* ===================== Theme accents ===================== */
 .purple-button,
 button[variant="primary"],
@@ -6,6 +36,7 @@ button.primary {
   background: #611DD9 !important;
   border-color: #611DD9 !important;
 }
+
 .purple-button:hover,
 button[variant="primary"]:hover,
 .gr-button-primary:hover,
@@ -22,8 +53,16 @@ button.primary:hover {
 }
 
 /* Accessibility focus */
-.gr-button:focus { outline: 2px solid #611DD9 !important; outline-offset: 2px !important; }
-.gr-dropdown:focus, .gr-textbox:focus { outline: 2px solid #611DD9 !important; outline-offset: 1px !important; }
+.gr-button:focus {
+  outline: 2px solid #611DD9 !important;
+  outline-offset: 2px !important;
+}
+
+.gr-dropdown:focus,
+.gr-textbox:focus {
+  outline: 2px solid #611DD9 !important;
+  outline-offset: 1px !important;
+}
 
 /* ===================== Tabs ===================== */
 .main-tabs [role="tab"] {
@@ -36,13 +75,15 @@ button.primary:hover {
   font-weight: 600 !important;
   transition: all 0.2s ease !important;
 }
+
 .main-tabs [role="tab"][aria-selected="true"] {
   background: #611DD9 !important;
   color: #fff !important;
   border-color: #611DD9 !important;
-  box-shadow: 0 2px 10px rgba(97,29,217,0.35) !important;
+  box-shadow: 0 2px 10px rgba(97, 29, 217, 0.35) !important;
   z-index: 2 !important;
 }
+
 .main-tabs [role="tabpanel"] {
   border: 1px solid #3a3a3a !important;
   border-top: 0 !important;
@@ -67,17 +108,25 @@ button.primary:hover {
   color: #fff !important;
   border: 2px solid #4b4b4b !important;
   border-radius: 10px !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
   transition: border-color .15s ease, box-shadow .15s ease !important;
 }
+
 .emphasized-input input::placeholder,
-.emphasized-input textarea::placeholder { color: #b9b9b9 !important; opacity: 1 !important; }
+.emphasized-input textarea::placeholder {
+  color: #b9b9b9 !important;
+  opacity: 1 !important;
+}
+
 .emphasized-input input:hover,
-.emphasized-input textarea:hover { border-color: #7a5af8 !important; }
+.emphasized-input textarea:hover {
+  border-color: #7a5af8 !important;
+}
+
 .emphasized-input input:focus,
 .emphasized-input textarea:focus {
   border-color: #611DD9 !important;
-  box-shadow: 0 0 0 3px rgba(97,29,217,0.35) !important;
+  box-shadow: 0 0 0 3px rgba(97, 29, 217, 0.35) !important;
   outline: none !important;
 }
 
@@ -90,8 +139,8 @@ button.primary:hover {
 .gradio-container .gr-help {
   margin: 8px 0 10px !important;
   padding: 10px 14px !important;
-  background: rgba(255,255,255,0.05) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #cfcfcf !important;
   border-radius: 8px !important;
   display: block !important;
@@ -101,23 +150,25 @@ button.primary:hover {
 .large-upload-button {
   border: 2px dashed #611DD9 !important;
   border-radius: 10px !important;
-  background: rgba(97,29,217,0.05) !important;
+  background: rgba(97, 29, 217, 0.05) !important;
   transition: all .3s ease !important;
 }
+
 .large-upload-button:hover {
-  background: rgba(97,29,217,0.1) !important;
+  background: rgba(97, 29, 217, 0.1) !important;
   border-color: #5016b3 !important;
 }
 
 .thumbnail-container {
   border-radius: 8px !important;
   overflow: hidden !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   transition: transform .2s ease !important;
 }
+
 .thumbnail-container:hover {
   transform: scale(1.02) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ===================== Status & analysis ===================== */
@@ -129,15 +180,24 @@ button.primary:hover {
   font-size: 14px !important;
 }
 
-.analysis-section, .analysis-section p, .analysis-section li {
-  font-size: 1.15rem !important;
+.analysis-section,
+.analysis-section p,
+.analysis-section li {
+  font-size: 1.35rem !important;
   line-height: 1.65 !important;
 }
-.analysis-section h1, .analysis-section h2, .analysis-section h3 {
-  font-size: 1.55rem !important;
+
+.analysis-section h1,
+.analysis-section h2,
+.analysis-section h3 {
+  font-size: 1.8rem !important;
   line-height: 1.4 !important;
 }
-.llm-output { font-size: 1.18rem !important; line-height: 1.7 !important; }
+
+.llm-output {
+  font-size: 1.4rem !important;
+  line-height: 1.7 !important;
+}
 
 /* ===================== Conversa tab styling ===================== */
 /* Chat surface */
@@ -168,7 +228,8 @@ button.primary:hover {
 .gr-chatbot .message.bot,
 .gr-chatbot .message.role-assistant,
 .chatbot-surface .message.bot {
-  background: #1a1533 !important;       /* subtle purple tint */
+  background: #1a1533 !important;
+  /* subtle purple tint */
   border: 1px solid #2c2359 !important;
 }
 
@@ -179,7 +240,9 @@ button.primary:hover {
   border-radius: 12px !important;
   padding: 14px !important;
 }
-.card-title h3, .card-title h4 {
+
+.card-title h3,
+.card-title h4 {
   margin-top: 0 !important;
   margin-bottom: 6px !important;
 }
@@ -192,18 +255,55 @@ button.primary:hover {
 
 /* ===================== Mobile tweaks ===================== */
 @media (max-width: 768px) {
-  .gradio-container { padding: 10px !important; }
-  .gr-button { width: 100% !important; margin: 5px 0 !important; }
-  .gr-textbox, .gr-dropdown { font-size: 16px !important; } /* avoid iOS zoom */
+  .gradio-container {
+    padding: 10px !important;
+  }
+
+  .gr-button {
+    width: 100% !important;
+    margin: 5px 0 !important;
+  }
+
+  .gr-textbox,
+  .gr-dropdown {
+    font-size: 16px !important;
+  }
+
+  /* avoid iOS zoom */
 }
 
 /* Top bar + ID chip */
-.topbar { align-items: end; gap: 12px; }
-.id-echo { text-align: right; }
-.id-echo code { font-weight: 700; }
+.topbar {
+  align-items: end;
+  gap: 12px;
+}
+
+.id-echo {
+  text-align: right;
+}
+
+.id-echo code {
+  font-weight: 700;
+}
 
 /* ===== ID bar layout: center the activate button vertically ===== */
-.id-row { align-items: stretch !important; }             /* Make columns equal height */
-.id-button-col { display: flex !important; }             /* Turn right column into a flex box */
-.id-button-col > * { margin: auto 0 !important; }        /* Vertically center its child (the button) */
-.id-button-col .gr-button { width: 100% !important; }    /* Full width for a tidy look */
+.id-row {
+  align-items: stretch !important;
+}
+
+/* Make columns equal height */
+.id-button-col {
+  display: flex !important;
+}
+
+/* Turn right column into a flex box */
+.id-button-col>* {
+  margin: auto 0 !important;
+}
+
+/* Vertically center its child (the button) */
+.id-button-col .gr-button {
+  width: 100% !important;
+}
+
+/* Full width for a tidy look */
