@@ -4,10 +4,10 @@ Callback functions for the Gradio interface.
 
 import gradio as gr
 
-from config import AI_PROVIDER, MAX_IMAGES, DEBUG_MODE, DEBUG_LLM_OUTPUT
-from image_utils import encode_image_to_base64
 from ai_providers import call_ai_model
+from config import AI_PROVIDER, DEBUG_LLM_OUTPUT, DEBUG_MODE, MAX_IMAGES
 from history_manager import load_history, save_history
+from image_utils import encode_image_to_base64
 
 
 def history_to_gradio_messages(history):
@@ -16,7 +16,7 @@ def history_to_gradio_messages(history):
     respecting the 'visible' flag.
     """
     msgs = []
-    for m in (history or []):
+    for m in history or []:
         if not m.get("visible", True):
             continue  # Skip messages marked as not visible
 
@@ -38,12 +38,18 @@ def generate_llm_response(
     classification,
     user_description,
     *type_selections,
-    progress=gr.Progress()
+    progress=gr.Progress(),
 ):
     if DEBUG_MODE:
         if user_id:
             h = load_history(user_id) or []
-            h.append({"role": "user", "parts": ["(DEBUG) Sol·licitud d'anàlisi"], "visible": False})
+            h.append(
+                {
+                    "role": "user",
+                    "parts": ["(DEBUG) Sol·licitud d'anàlisi"],
+                    "visible": False,
+                }
+            )
             h.append({"role": "model", "parts": [DEBUG_LLM_OUTPUT], "visible": False})
             save_history(user_id, h)
         return DEBUG_LLM_OUTPUT
@@ -56,7 +62,9 @@ def generate_llm_response(
         return "❌ **Error**: Si us plau, pugeu almenys una imatge per a l'anàlisi."
 
     if not user_id:
-        return "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
+        return (
+            "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
+        )
 
     if not classification:
         return "❌ **Error**: Si us plau, seleccioneu primer una classificació."
@@ -69,7 +77,9 @@ def generate_llm_response(
             valid_types.append(type_selections[i])
 
     if not valid_files:
-        return "❌ **Error**: Si us plau, especifiqueu el tipus per a almenys una imatge."
+        return (
+            "❌ **Error**: Si us plau, especifiqueu el tipus per a almenys una imatge."
+        )
 
     progress(0.2, desc="Processant les imatges...")
 
@@ -96,7 +106,7 @@ def generate_llm_response(
             )
             image_info.append(f"{filename} - {valid_types[i]}")
         else:
-            return f"❌ **Error**: No s\'ha pogut processar la imatge {i + 1}"
+            return f"❌ **Error**: No s'ha pogut processar la imatge {i + 1}"
 
     if classification == "Pràctica 1. Revista":
         prompt_file = "prompts/prompt_magazine_full.txt"
@@ -109,24 +119,24 @@ def generate_llm_response(
         with open(prompt_file, "r", encoding="utf-8") as f:
             base_prompt = f.read()
     except FileNotFoundError:
-        return f"❌ **Error**: No s\'ha trobat el fitxer de prompt: {prompt_file}"
+        return f"❌ **Error**: No s'ha trobat el fitxer de prompt: {prompt_file}"
 
     context = f"Classificació: {classification}"
     if user_description and user_description.strip():
-        context += f"\nDescripció de l\'usuari: {user_description.strip()}"
+        context += f"\nDescripció de l'usuari: {user_description.strip()}"
 
     context += f"\nImatges a analitzar: {', '.join(image_info)}"
 
-    prompt = f'''{base_prompt}
+    prompt = f"""{base_prompt}
 
 ---
 ### CONTEXT ADICIONAL DE L'ALUMNE:
 {context}
 
 Analitza les imatges proporcionades seguint les directrius del prompt anterior.
-'''
+"""
 
-    progress(0.6, desc="Enviant petició al model d\'IA...")
+    progress(0.6, desc="Enviant petició al model d'IA...")
 
     history = load_history(user_id) or []
 
@@ -140,6 +150,7 @@ Analitza les imatges proporcionades seguint les directrius del prompt anterior.
     progress(1.0, desc="Anàlisi completada!")
 
     return format_analysis_results(result, classification, files, image_info)
+
 
 def update_type_dropdowns(files, classification):
     if files:
@@ -163,12 +174,16 @@ def update_type_dropdowns(files, classification):
 
     # ---- Type options depending on classification ----
     if classification == "Pràctica 1. Revista":
-        type_options = ["Portada", "Interior"]
+        type_options = ["Portada", "Pàgines interiors"]
     elif classification == "Pràctica 2. Xarxes Socials":
         type_options = [
-            "Instagram Artista", "Instagram Concurs",
-            "Twitter Artista", "Twitter Concurs",
-            "Newsletter", "Logo", "Capçalera",
+            "Newsletter",
+            "Instagram Artista",
+            "Instagram Concurs",
+            "X Artista",
+            "X Concurs",
+            "Logotip",
+            "Capçelera",
         ]
     else:
         type_options = ["—"]
@@ -177,7 +192,9 @@ def update_type_dropdowns(files, classification):
     row_updates = [gr.update(visible=False)] * num_rows
     image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
     # Hidden dropdowns -> visible=False, value=None, choices=["—"] (safe)
-    dropdown_updates = [gr.update(visible=False, choices=["—"], value=None)] * MAX_IMAGES
+    dropdown_updates = [
+        gr.update(visible=False, choices=["—"], value=None)
+    ] * MAX_IMAGES
 
     # Reveal only the needed slots, with real choices
     for i in range(image_count):
@@ -200,9 +217,13 @@ def update_type_dropdowns(files, classification):
 
     return [counter_text] + row_updates + image_updates + dropdown_updates
 
+
 # Removed auto_detect_image_type function - users must classify manually
 
-def update_button_and_status(user_id, files, classification, user_description, *type_selections):
+
+def update_button_and_status(
+    user_id, files, classification, user_description, *type_selections
+):
     if files:
         files = [f for f in files if f is not None]
     if not files:
@@ -214,7 +235,7 @@ def update_button_and_status(user_id, files, classification, user_description, *
     if not user_id:
         return (
             gr.update(interactive=False),
-            "🧑‍🎓 **Estat**: Introduïu el vostre identificador d\'estudiant per començar",
+            "🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
         )
 
     if not classification:
@@ -241,18 +262,20 @@ def update_button_and_status(user_id, files, classification, user_description, *
 
     return (
         gr.update(interactive=True),
-        f"✅ **Estat**: Tot preparat! {len(valid_types)} imatge{'s' if len(valid_types) > 1 else ''} {'preparades' if len(valid_types) > 1 else 'preparada'} per analitzar"
+        f"✅ **Estat**: Tot preparat! {len(valid_types)} imatge{'s' if len(valid_types) > 1 else ''} {'preparades' if len(valid_types) > 1 else 'preparada'} per analitzar",
     )
+
 
 def format_analysis_results(result, classification, files, image_info):
     return result
+
 
 def handle_conversation_message(message, history, user_id):
     """
     Handles messages from the conversation tab.
     """
     if not user_id:
-        gr.Warning("Error: No s\'ha trobat l\'identificador d\'usuari.")
+        gr.Warning("Error: No s'ha trobat l'identificador d'usuari.")
         return history, gr.update(value=None)
 
     history = load_history(user_id) or []
@@ -261,15 +284,21 @@ def handle_conversation_message(message, history, user_id):
         with open("prompts/prompt_conversation.txt", "r", encoding="utf-8") as f:
             conversation_prompt = f.read()
     except FileNotFoundError:
-        gr.Warning("Error: No s\'ha trobat el fitxer de prompt de conversa.")
+        gr.Warning("Error: No s'ha trobat el fitxer de prompt de conversa.")
         return history, gr.update(value=None)
 
     # Prepend the conversational prompt if it's the first conversational message
-    is_first_conversation = not any(m.get('visible', False) for m in history)
+    is_first_conversation = not any(m.get("visible", False) for m in history)
     if is_first_conversation:
         system_prompt = [
             {"role": "user", "parts": [conversation_prompt], "visible": False},
-            {"role": "model", "parts": ["Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."], "visible": True}
+            {
+                "role": "model",
+                "parts": [
+                    "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
+                ],
+                "visible": True,
+            },
         ]
         history.extend(system_prompt)
 
@@ -286,7 +315,7 @@ def handle_conversation_message(message, history, user_id):
         user_parts.append(text_input)
 
     if isinstance(message, dict):
-        for file_obj in (message.get("files") or []):
+        for file_obj in message.get("files") or []:
             file_path = file_obj if isinstance(file_obj, str) else file_obj.get("path")
             if file_path:
                 img_bytes = encode_image_to_base64(file_path)
@@ -308,7 +337,9 @@ def handle_conversation_message(message, history, user_id):
             f"Imatges adjuntes: {len(images_base64)}"
         )
     else:
-        response = call_ai_model(AI_PROVIDER, "", images_base64=images_base64, history=history)
+        response = call_ai_model(
+            AI_PROVIDER, "", images_base64=images_base64, history=history
+        )
 
     history.append({"role": "model", "parts": [response], "visible": True})
     save_history(user_id, history)
