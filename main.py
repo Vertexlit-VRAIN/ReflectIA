@@ -135,6 +135,7 @@ def main():
                     classification = gr.Dropdown(
                         choices=["Pràctica 1. Revista", "Pràctica 2. Xarxes Socials"],
                         label="📋 Classificació d'Imatges",
+                        show_label=False,
                         value=None,
                         info="💡 Trieu una de les dues pràctiques",
                         elem_classes=["visible-dropdown", "with-info"],
