@@ -211,22 +211,25 @@ def update_type_dropdowns(files, classification):
 def update_button_and_status(
     user_id, files, classification, user_description, *type_selections
 ):
-    # Normalize inputs
+    # Normalize
     files = [f for f in (files or []) if f is not None]
     has_files = len(files) > 0
     has_id = bool(user_id)
     has_class = bool(classification)
-
-    # Count valid types for the uploaded images
-    sel = list(type_selections[: len(files)])
-    valid_types = [t for t in sel if t is not None and t != ""]
-    has_any_type = len(valid_types) > 0
-
     has_desc = bool(user_description and user_description.strip())
 
-    ready = has_id and has_files and has_class and has_any_type and has_desc
+    # Cada imatge ha de tenir tipus (no nuls / no buits)
+    needed = len(files)
+    selected = []
+    for i in range(needed):
+        t = type_selections[i] if i < len(type_selections) else None
+        if t is not None and str(t).strip() != "":
+            selected.append(t)
+    all_typed = (len(selected) == needed) and needed > 0
 
-    # Minimal, single-line hint (only when something is missing)
+    ready = has_id and has_files and has_class and all_typed and has_desc
+
+    # Missatge mínim quan falta alguna cosa
     missing = None
     if not has_id:
         missing = "Activa l’ID per començar."
@@ -234,13 +237,12 @@ def update_button_and_status(
         missing = "Puja almenys una imatge."
     elif not has_class:
         missing = "Selecciona la classificació."
-    elif not has_any_type:
-        missing = "Assigna el tipus a alguna imatge."
+    elif not all_typed:
+        missing = "Assigna un tipus a **cada** imatge."
     elif not has_desc:
         missing = "Afegeix una breu descripció."
 
     status_out = gr.update(value=f"ℹ️ {missing}" if missing else "", visible=not ready)
-
     return (gr.update(interactive=ready), status_out)
 
 def format_analysis_results(result, classification, files, image_info):
