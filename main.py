@@ -114,7 +114,7 @@ def main():
                         show_label=False,
                         lines=1,
                         max_lines=1,
-                        elem_classes=["emphasized-input"],
+                        elem_classes=["emphasized-input", "larger-font"],
                     )
                     confirm_id_btn = gr.Button(
                         "✓ Activar ID",
@@ -134,7 +134,7 @@ def main():
                     show_label=False,
                     value=None,
                     info="¿Quina pràctica vols analitzar?",
-                    elem_classes=["visible-dropdown", "with-info"],
+                    elem_classes=["visible-dropdown", "with-info", "larger-font"],
                 )
                 with gr.Row():
                     with gr.Column(scale=4):
@@ -175,7 +175,7 @@ def main():
                                         value=None,
                                         visible=False,
                                         show_label=False,
-                                        elem_classes=["visible-dropdown"],
+                                        elem_classes=["visible-dropdown", "medium-font"],
                                         allow_custom_value=True,
                                     )
                             thumbnail_images.append(thumb_a)
@@ -199,7 +199,7 @@ def main():
                                         label=f"Tipus per a Imatge {i + 2}",
                                         value=None,
                                         visible=False,
-                                        elem_classes=["visible-dropdown"],
+                                        elem_classes=["visible-dropdown", "medium-font"],
                                         allow_custom_value=True,
                                         show_label=False,
                                     )
@@ -213,12 +213,12 @@ def main():
                     max_lines=5,
                     show_label=False,
                     info="Descripció",
-                    elem_classes=["emphasized-input", "with-info"],
+                    elem_classes=["emphasized-input", "with-info", "larger-font"],
                 )
                 status_message = gr.Markdown(
                     value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
                     visible=True,
-                    elem_classes=["status-message"],
+                    elem_classes=["status-message", "larger-font"],
                 )
                 analyze_btn = gr.Button(
                     "🔍 Analitzar",

@@ -428,13 +428,59 @@ div[data-testid*="chatbot"],
 
 /* ===================== ID Accordion top margin ===================== */
 /* Add top margin to the ID accordion for better spacing from browser top */
-.gradio-container {
-  padding-top: 24px !important;
-}
 
 /* Alternative selectors to target the accordion */
 div[data-testid*="accordion"]:first-of-type,
 .gr-accordion:first-child,
 .gradio-container > div:first-child {
   margin-top: 24px !important;
+}
+
+/* Center the layout */
+.gradio-container {
+    width: 70%;
+    margin: 0 auto;
+}
+
+/* Increase font size for specific elements */
+.gradio-container .form-info,
+.gradio-container .wrap .info,
+.gradio-container [data-testid="block-info"],
+.gradio-container .gr-help {
+    font-size: 1.2rem !important;
+}
+
+.gradio-container .gr-dropdown select,
+.gradio-container .gr-dropdown input,
+.gradio-container .gr-dropdown .gr-box,
+.gradio-container .gr-dropdown .wrap {
+    font-size: 1.2rem !important;
+}
+
+.larger-font span,
+.larger-font p,
+.larger-font {
+    font-size: 1.1rem !important;
+}
+
+.larger-font input,
+.larger-font textarea {
+    font-size: 1.1rem !important;
+}
+
+.medium-font input{
+    font-size: 1.1rem !important;
+}
+
+/* Align dropdowns vertically with thumbnails */
+.thumbline {
+  display: flex !important;
+  align-items: center !important;   /* center items on the row */
+  gap: 12px !important;             /* space between image and dropdown */
+}
+
+.vcenter-col {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
 }
