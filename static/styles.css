@@ -116,8 +116,7 @@ button.primary:hover {
 .emphasized-input textarea::placeholder {
   color: #b9b9b9 !important;
   opacity: 1 !important;
-  font-size: 1.2rem !important;
-  line-height: 1.6 !important;
+  font-size: 1em;
 }
 
 .emphasized-input input:hover,
