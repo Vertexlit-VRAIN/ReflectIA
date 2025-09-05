@@ -6,8 +6,9 @@ classifications (e.g., Editorial, Social Network).
 """
 
 import gradio as gr
+import time
 
-from config import MAX_IMAGES
+from config import MAX_IMAGES, DEBUG_FAKE_WAIT_SECONDS
 from gradio_callbacks import (
     generate_llm_response,
     handle_conversation_message,
@@ -63,47 +64,44 @@ def commit_id(uid_text):
         content_update,                # id_content update
     )
 
-
 def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
-    """
-    Run analysis. Use a 3-step generator:
-      1) Show loading
-      2) Post result + unlock composer
-      3) Switch to Anàlisi tab AFTER the header definitely exists
-    """
-    # Step 1: loading state
+    # Step 1: show overlay / loading
     yield (
         "**Analitzant les imatges..., espereu un moment**",
         [],
-        gr.update(),                  # analysis_tab (no change)
-        gr.update(),                  # composer (no change)
-        gr.update(),                  # tabs_wrapper (no change)
+        gr.update(),                  # analysis_tab
+        gr.update(),                  # composer
+        gr.update(),                  # tabs_wrapper
+        gr.update(visible=True),      # 🔵 SHOW overlay  (si vas seguir el pas anterior de l’overlay)
     )
 
-    # Compute result (respects DEBUG_MODE inside generate_llm_response)
-    text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
+    # ⬇️ Afegit: espera simulada per debugging / demo
+    if DEBUG_FAKE_WAIT_SECONDS and DEBUG_FAKE_WAIT_SECONDS > 0:
+        time.sleep(DEBUG_FAKE_WAIT_SECONDS)
 
-    # Ensure the tutor greeting is visible immediately on first open
+    # Work real (o DEBUG_LLM_OUTPUT si DEBUG_MODE = True)
+    text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
     chat_messages = ensure_conversation_intro(uid)
 
-    # Step 2: show results + unlock composer (do NOT switch tabs yet)
+    # Step 2: results + unlock + HIDE overlay
     yield (
-        text,                          # markdown results
-        chat_messages,                 # chat content (includes greeting)
-        gr.update(),                   # analysis_tab (unchanged; already visible)
-        gr.update(interactive=True),   # unlock composer
-        gr.update(),                   # tabs_wrapper (no selection yet)
+        text,
+        chat_messages,
+        gr.update(),
+        gr.update(interactive=True),
+        gr.update(),
+        gr.update(visible=False),     # 🔵 HIDE overlay
     )
 
-    # Step 3: now that headers are in DOM, switch to Anàlisi (index 1)
+    # Step 3: switch to Anàlisi
     yield (
-        gr.update(),                   # llm_output (no change)
-        gr.update(),                   # chat (no change)
-        gr.update(),                   # analysis_tab (no change)
-        gr.update(),                   # composer (no change)
-        gr.update(selected=1),         # switch to Anàlisi tab
+        gr.update(),
+        gr.update(),
+        gr.update(),
+        gr.update(),
+        gr.update(selected=1),
+        gr.update(),                  # overlay unchanged
     )
-
 
 def main():
     custom_css = _load_custom_css("static/styles.css")
@@ -136,6 +134,19 @@ def main():
         css=custom_css,
     ) as demo:
         active_user_id = gr.State("")
+
+        wait_overlay = gr.HTML(
+            """
+            <div class="wait-overlay">
+              <div class="wait-card">
+                <div class="wait-title">Analitzant…</div>
+                <div class="wait-bar"><span class="bar"></span></div>
+                <div class="wait-tip">Això pot trigar uns segons</div>
+              </div>
+            </div>
+            """,
+            visible=False,
+        )
 
         # ---------- Global ID accordion ----------
         with gr.Accordion(PENDING_LABEL, open=True) as id_accordion:
@@ -370,7 +381,7 @@ def main():
         analyze_btn.click(
             fn=analyze_and_close,
             inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-            outputs=[llm_output, chat, analysis_tab, composer, tabs_wrapper],
+            outputs=[llm_output, chat, analysis_tab, composer, tabs_wrapper, wait_overlay],
         )
 
     demo.launch(debug=True)
