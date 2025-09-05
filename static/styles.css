@@ -238,6 +238,93 @@ button.primary:hover {
   border-radius: 12px !important;
 }
 
+/* Prevent text copying in chat messages - comprehensive approach */
+.chatbot-surface,
+.chatbot-surface *,
+.chatbot-surface .gr-chatbot,
+.chatbot-surface .gr-chatbot *,
+.chatbot-surface .message,
+.chatbot-surface .message *,
+.gr-chatbot,
+.gr-chatbot *,
+.gr-chatbot .message,
+.gr-chatbot .message *,
+.gr-chatbot div,
+.gr-chatbot p,
+.gr-chatbot span,
+.gr-chatbot strong,
+.gr-chatbot em,
+.chatbot-surface div,
+.chatbot-surface p,
+.chatbot-surface span,
+.chatbot-surface strong,
+.chatbot-surface em {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -khtml-user-select: none !important;
+}
+
+/* Additional selectors for Gradio's internal structure */
+div[data-testid*="chatbot"] *,
+div[data-testid*="chatbot"],
+.gr-chatbot-message,
+.gr-chatbot-message *,
+.message-content,
+.message-content * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Disable context menu and drag on all chat content */
+.chatbot-surface,
+.chatbot-surface *,
+.gr-chatbot,
+.gr-chatbot * {
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+  user-drag: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Override any potential text selection from parent elements */
+.chatbot-surface::selection,
+.chatbot-surface *::selection,
+.gr-chatbot::selection,
+.gr-chatbot *::selection {
+  background: transparent !important;
+}
+
+.chatbot-surface::-moz-selection,
+.chatbot-surface *::-moz-selection,
+.gr-chatbot::-moz-selection,
+.gr-chatbot *::-moz-selection {
+  background: transparent !important;
+}
+
+/* JavaScript-based protection via CSS */
+.chatbot-surface,
+.gr-chatbot {
+  /* Prevent text selection via CSS */
+  -webkit-user-select: none !important;
+  -moz-user-select: -moz-none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  
+  /* Prevent context menu */
+  -webkit-touch-callout: none !important;
+  
+  /* Additional security via pointer events */
+  -webkit-user-modify: read-only !important;
+}
+
 /* Chat message bubbles (fallback across Gradio versions) */
 .gr-chatbot .message,
 .chatbot-surface .message {

@@ -75,6 +75,29 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
 
 def main():
     custom_css = _load_custom_css("static/styles.css")
+    
+    # Add JavaScript to prevent text copying in chat
+    chat_protection_js = """
+    <script>
+    function preventChatCopy() {
+        const chatElements = document.querySelectorAll('.chatbot-surface, .gr-chatbot, .chatbot-surface *, .gr-chatbot *');
+        chatElements.forEach(element => {
+            element.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+            element.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+            element.addEventListener('dragstart', function(e) { e.preventDefault(); return false; });
+            element.addEventListener('copy', function(e) { e.preventDefault(); return false; });
+            element.addEventListener('cut', function(e) { e.preventDefault(); return false; });
+        });
+    }
+    
+    // Run when page loads and when new content is added
+    document.addEventListener('DOMContentLoaded', preventChatCopy);
+    const observer = new MutationObserver(preventChatCopy);
+    observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+    """
+    
+    custom_css += chat_protection_js
 
     with gr.Blocks(
         title="AI Image Analysis", theme="Taithrah/Minimal", css=custom_css
