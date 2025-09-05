@@ -59,18 +59,14 @@ def commit_id(uid_text):
 
 
 def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
-    # First return loading state with more content to override Gradio's default behavior
-    yield (
-        "**Analitzant les imatges..., espereu un moment**",
-        gr.update(open=False),
-        [],
-    )
+    # First return loading state (no accordion to close anymore)
+    yield ("**Analitzant les imatges..., espereu un moment**", [])
 
     # Then process and return results
     text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
     history = load_history(uid) or []
     chat_messages = history_to_gradio_messages(history)
-    yield text, gr.update(open=False), chat_messages
+    yield text, chat_messages
 
 
 def main():
@@ -130,104 +126,107 @@ def main():
         # ---------- Tabs ----------
         with gr.Tabs(elem_classes=["main-tabs"], visible=False) as tabs_wrapper:
             # ----- Tab: Anàlisi -----
-            with gr.TabItem("Anàlisi"):
-                with gr.Accordion("Entrada", open=True) as input_accordion:
-                    classification = gr.Dropdown(
-                        choices=["Pràctica 1. Revista", "Pràctica 2. Xarxes Socials"],
-                        label="📋 Classificació d'Imatges",
-                        show_label=False,
-                        value=None,
-                        info="💡 Trieu una de les dues pràctiques",
-                        elem_classes=["visible-dropdown", "with-info"],
-                    )
-                    with gr.Row():
-                        with gr.Column(scale=4):
-                            files = gr.File(
-                                file_count="multiple",
-                                file_types=["image"],
-                                label=f"📸 Afegir imatges (màxim {MAX_IMAGES})",
-                                height=200,
-                                elem_classes=["large-upload-button"],
-                            )
-                        with gr.Column(scale=1):
-                            image_counter = gr.Markdown(
-                                value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
-                            )
+            with gr.TabItem("Configuració"):
+                # (Accordion "Entrada" removed; components placed directly in tab)
+                classification = gr.Dropdown(
+                    choices=["Pràctica 1. Revista", "Pràctica 2. Xarxes Socials"],
+                    label="📋 Classificació d'Imatges",
+                    show_label=False,
+                    value=None,
+                    info="¿Quina pràctica vols analitzar?",
+                    elem_classes=["visible-dropdown", "with-info"],
+                )
+                with gr.Row():
+                    with gr.Column(scale=4):
+                        files = gr.File(
+                            file_count="multiple",
+                            file_types=["image"],
+                            label=f"📸 Afegir imatges",
+                            height=200,
+                            elem_id="file-uploader",
+                            elem_classes=["large-upload-button"],
+                        )
+                    # with gr.Column(scale=1):
+                    #     image_counter = gr.Markdown(
+                    #         value=f"**Imatges**: 0/{MAX_IMAGES}", visible=True
+                    #     )
 
-                    rows, thumbnail_images, type_dropdowns = [], [], []
-                    for i in range(0, MAX_IMAGES, 2):
-                        with gr.Row(visible=False) as row:
-                            rows.append(row)
-                            with gr.Column(scale=1, min_width=360):
-                                with gr.Row():
-                                    with gr.Column(scale=1, min_width=160):
-                                        thumb_a = gr.Image(
-                                            type="filepath",
-                                            label=f"Image {i + 1}",
-                                            height=150,
-                                            width=150,
-                                            visible=False,
-                                            interactive=False,
-                                            show_label=False,
-                                            elem_classes=["thumbnail-container"],
-                                        )
-                                    with gr.Column(scale=1, min_width=180):
-                                        dd_a = gr.Dropdown(
-                                            choices=[],
-                                            label=f"Tipus per a Imatge {i + 1}",
-                                            value=None,
-                                            visible=False,
-                                            elem_classes=["visible-dropdown"],
-                                            allow_custom_value=True,
-                                        )
-                                thumbnail_images.append(thumb_a)
-                                type_dropdowns.append(dd_a)
-                            with gr.Column(scale=1, min_width=360):
-                                with gr.Row():
-                                    with gr.Column(scale=1, min_width=160):
-                                        thumb_b = gr.Image(
-                                            type="filepath",
-                                            label=f"Image {i + 2}",
-                                            height=150,
-                                            width=150,
-                                            visible=False,
-                                            interactive=False,
-                                            show_label=False,
-                                            elem_classes=["thumbnail-container"],
-                                        )
-                                    with gr.Column(scale=1, min_width=180):
-                                        dd_b = gr.Dropdown(
-                                            choices=[],
-                                            label=f"Tipus per a Imatge {i + 2}",
-                                            value=None,
-                                            visible=False,
-                                            elem_classes=["visible-dropdown"],
-                                            allow_custom_value=True,
-                                        )
-                                thumbnail_images.append(thumb_b)
-                                type_dropdowns.append(dd_b)
+                rows, thumbnail_images, type_dropdowns = [], [], []
+                for i in range(0, MAX_IMAGES, 2):
+                    with gr.Row(visible=False) as row:
+                        rows.append(row)
+                        with gr.Column(scale=1, min_width=360):
+                            with gr.Row(elem_classes=["thumbline"]):  # ⬅️ add thumbline
+                                with gr.Column(scale=1, min_width=160):
+                                    thumb_a = gr.Image(
+                                        type="filepath",
+                                        label=f"Image {i + 1}",
+                                        height=150,
+                                        width=150,
+                                        visible=False,
+                                        interactive=False,
+                                        show_label=False,
+                                        elem_classes=["thumbnail-container"],
+                                    )
+                                with gr.Column(scale=1, min_width=180, elem_classes=["vcenter-col"]):  # ⬅️ add vcenter-col
+                                    dd_a = gr.Dropdown(
+                                        choices=[],
+                                        label=f"Tipus per a Imatge {i + 1}",
+                                        value=None,
+                                        visible=False,
+                                        show_label=False,
+                                        elem_classes=["visible-dropdown"],
+                                        allow_custom_value=True,
+                                    )
+                            thumbnail_images.append(thumb_a)
+                            type_dropdowns.append(dd_a)
+                        with gr.Column(scale=1, min_width=360):
+                            with gr.Row(elem_classes=["thumbline"]):  # ⬅️ add thumbline
+                                with gr.Column(scale=1, min_width=160):
+                                    thumb_b = gr.Image(
+                                        type="filepath",
+                                        label=f"Image {i + 2}",
+                                        height=150,
+                                        width=150,
+                                        visible=False,
+                                        interactive=False,
+                                        show_label=False,
+                                        elem_classes=["thumbnail-container"],
+                                    )
+                                with gr.Column(scale=1, min_width=180, elem_classes=["vcenter-col"]):  # ⬅️ add vcenter-col
+                                    dd_b = gr.Dropdown(
+                                        choices=[],
+                                        label=f"Tipus per a Imatge {i + 2}",
+                                        value=None,
+                                        visible=False,
+                                        elem_classes=["visible-dropdown"],
+                                        allow_custom_value=True,
+                                        show_label=False,
+                                    )
+                            thumbnail_images.append(thumb_b)
+                            type_dropdowns.append(dd_b)
 
-                    user_description = gr.Textbox(
-                        label="📝 Descripció",
-                        placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges…",
-                        lines=3,
-                        max_lines=5,
-                        show_label=False,
-                        info="💡 Descripció",
-                        elem_classes=["emphasized-input", "with-info"],
-                    )
-                    status_message = gr.Markdown(
-                        value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
-                        visible=True,
-                        elem_classes=["status-message"],
-                    )
-                    analyze_btn = gr.Button(
-                        "🔍 Analitzar Imatges",
-                        variant="primary",
-                        interactive=False,
-                        size="lg",
-                        elem_classes=["purple-button"],
-                    )
+                user_description = gr.Textbox(
+                    label="📝 Descripció",
+                    placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges…",
+                    lines=3,
+                    max_lines=5,
+                    show_label=False,
+                    info="Descripció",
+                    elem_classes=["emphasized-input", "with-info"],
+                )
+                status_message = gr.Markdown(
+                    value="🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
+                    visible=True,
+                    elem_classes=["status-message"],
+                )
+                analyze_btn = gr.Button(
+                    "🔍 Analitzar",
+                    variant="primary",
+                    interactive=False,
+                    size="lg",
+                    elem_classes=["purple-button"],
+                )
 
                 gr.Markdown(
                     "## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-section"]
@@ -238,11 +237,8 @@ def main():
                 )
 
             # ----- Tab: Conversa -----
-            with gr.TabItem("Conversa"):
+            with gr.TabItem("Anàlisi"):
                 gr.Markdown("## 💬 Conversa amb l'Assistent IA")
-                gr.Markdown(
-                    "_Després de la primera anàlisi, el context s'utilitzarà aquí per continuar la tutoria._"
-                )
                 chat = gr.Chatbot(
                     type="messages",
                     label="Sessió de tutoria",
@@ -292,7 +288,8 @@ def main():
             ],
         )
 
-        all_outputs = [image_counter] + rows + thumbnail_images + type_dropdowns
+        # all_outputs = [image_counter] + rows + thumbnail_images + type_dropdowns
+        all_outputs = rows + thumbnail_images + type_dropdowns
 
         # 1) CLASSIFICATION change: update UI, then recompute status
         classification.change(
@@ -326,11 +323,12 @@ def main():
                 outputs=[analyze_btn, status_message],
             )
 
+        # No more input_accordion in outputs
         analyze_btn.click(
             fn=analyze_and_close,
             inputs=[active_user_id, files, classification, user_description]
             + type_dropdowns,
-            outputs=[llm_output, input_accordion, chat],
+            outputs=[llm_output, chat],
         )
 
     demo.launch(debug=True)

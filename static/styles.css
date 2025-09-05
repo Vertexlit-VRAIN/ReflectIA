@@ -8,7 +8,7 @@
 .gr-textbox,
 .gr-dropdown,
 .gr-button {
-  font-size: 1.1rem !important;
+  font-size: 1rem !important;
 }
 
 .gr-markdown,
@@ -25,7 +25,7 @@
 
 /* Tab labels */
 .main-tabs [role="tab"] {
-  font-size: 1.05rem !important;
+  font-size: 1.1rem !important;
 }
 
 /* ===================== Theme accents ===================== */
@@ -71,7 +71,7 @@ button.primary:hover {
   border: 1px solid #3a3a3a !important;
   border-bottom: none !important;
   border-radius: 10px 10px 0 0 !important;
-  padding: 10px 16px !important;
+  padding: 10px 28px !important;
   font-weight: 600 !important;
   transition: all 0.2s ease !important;
 }
@@ -85,7 +85,7 @@ button.primary:hover {
 }
 
 .main-tabs [role="tabpanel"] {
-  border: 1px solid #3a3a3a !important;
+  /* border: 1px solid #3a3a3a !important; */
   border-top: 0 !important;
   border-radius: 0 10px 10px 10px !important;
   background: #1a1a1a !important;
@@ -116,6 +116,8 @@ button.primary:hover {
 .emphasized-input textarea::placeholder {
   color: #b9b9b9 !important;
   opacity: 1 !important;
+  font-size: 1.2rem !important;
+  line-height: 1.6 !important;
 }
 
 .emphasized-input input:hover,

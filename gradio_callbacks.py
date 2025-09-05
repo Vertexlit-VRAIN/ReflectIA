@@ -145,7 +145,6 @@ def update_type_dropdowns(files, classification):
     if files:
         files = [f for f in files if f is not None]
     image_count = len(files) if files else 0
-    counter_text = f"**Imatges**: {image_count}/{MAX_IMAGES}"
 
     num_rows = (MAX_IMAGES + 1) // 2
 
@@ -159,7 +158,7 @@ def update_type_dropdowns(files, classification):
         dropdown_updates = [
             gr.update(visible=False, choices=["—"], value=None)
         ] * MAX_IMAGES
-        return [counter_text] + row_updates + image_updates + dropdown_updates
+        return row_updates + image_updates + dropdown_updates
 
     # ---- Type options depending on classification ----
     if classification == "Pràctica 1. Revista":
@@ -180,7 +179,6 @@ def update_type_dropdowns(files, classification):
     # Start with everything hidden/cleared (safe)
     row_updates = [gr.update(visible=False)] * num_rows
     image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
-    # Hidden dropdowns -> visible=False, value=None, choices=["—"] (safe)
     dropdown_updates = [
         gr.update(visible=False, choices=["—"], value=None)
     ] * MAX_IMAGES
@@ -202,9 +200,10 @@ def update_type_dropdowns(files, classification):
             choices=type_options,
             value=None,
             label=f"Tipus per a {filename}",
+            show_label=False,
         )
 
-    return [counter_text] + row_updates + image_updates + dropdown_updates
+    return row_updates + image_updates + dropdown_updates
 
 
 # Removed auto_detect_image_type function - users must classify manually
