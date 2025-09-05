@@ -208,51 +208,40 @@ def update_type_dropdowns(files, classification):
 
 # Removed auto_detect_image_type function - users must classify manually
 
-
 def update_button_and_status(
     user_id, files, classification, user_description, *type_selections
 ):
-    if files:
-        files = [f for f in files if f is not None]
-    if not files:
-        return (
-            gr.update(interactive=False),
-            "📸 **Estat**: Pugeu una o més imatges per analitzar",
-        )
+    # Normalize inputs
+    files = [f for f in (files or []) if f is not None]
+    has_files = len(files) > 0
+    has_id = bool(user_id)
+    has_class = bool(classification)
 
-    if not user_id:
-        return (
-            gr.update(interactive=False),
-            "🧑‍🎓 **Estat**: Introduïu el vostre identificador d'estudiant per començar",
-        )
+    # Count valid types for the uploaded images
+    sel = list(type_selections[: len(files)])
+    valid_types = [t for t in sel if t is not None and t != ""]
+    has_any_type = len(valid_types) > 0
 
-    if not classification:
-        return (
-            gr.update(interactive=False),
-            "📋 **Estat**: Seleccioneu primer una classificació (Editorial o Social Network)",
-        )
+    has_desc = bool(user_description and user_description.strip())
 
-    valid_types = [
-        t for t in type_selections[: len(files)] if t is not None and t != ""
-    ]
+    ready = has_id and has_files and has_class and has_any_type and has_desc
 
-    if not valid_types:
-        return (
-            gr.update(interactive=False),
-            f"🏷️ **Estat**: Especifiqueu el tipus per a almenys una de les imatges",
-        )
+    # Minimal, single-line hint (only when something is missing)
+    missing = None
+    if not has_id:
+        missing = "Activa l’ID per començar."
+    elif not has_files:
+        missing = "Puja almenys una imatge."
+    elif not has_class:
+        missing = "Selecciona la classificació."
+    elif not has_any_type:
+        missing = "Assigna el tipus a alguna imatge."
+    elif not has_desc:
+        missing = "Afegeix una breu descripció."
 
-    if not user_description or not user_description.strip():
-        return (
-            gr.update(interactive=False),
-            "📝 **Estat**: Afegiu una descripció del vostre treball per continuar",
-        )
+    status_out = gr.update(value=f"ℹ️ {missing}" if missing else "", visible=not ready)
 
-    return (
-        gr.update(interactive=True),
-        f"✅ **Estat**: Tot preparat! {len(valid_types)} imatge{'s' if len(valid_types) > 1 else ''} {'preparades' if len(valid_types) > 1 else 'preparada'} per analitzar",
-    )
-
+    return (gr.update(interactive=ready), status_out)
 
 def format_analysis_results(result, classification, files, image_info):
     return result
@@ -333,3 +322,22 @@ def handle_conversation_message(message, history, user_id):
     save_history(user_id, history)
 
     return history_to_gradio_messages(history), gr.update(value=None, interactive=True)
+
+def ensure_conversation_intro(user_id):
+    """
+    Ensure the tutor's intro message is present and visible so the chat
+    shows a welcome immediately after analysis unlocks.
+    """
+    history = load_history(user_id) or []
+    # If there is already any visible message, keep it.
+    has_visible = any(m.get("visible", False) for m in history)
+    if not has_visible:
+        history.append({
+            "role": "model",
+            "parts": [
+                "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
+            ],
+            "visible": True,
+        })
+        save_history(user_id, history)
+    return history_to_gradio_messages(history)
