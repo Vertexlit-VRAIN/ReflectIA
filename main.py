@@ -75,7 +75,7 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
 
 def main():
     custom_css = _load_custom_css("static/styles.css")
-    
+
     # Add JavaScript to prevent text copying in chat
     chat_protection_js = """
     <script>
@@ -96,7 +96,7 @@ def main():
     observer.observe(document.body, { childList: true, subtree: true });
     </script>
     """
-    
+
     custom_css += chat_protection_js
 
     with gr.Blocks(
@@ -212,6 +212,7 @@ def main():
                         placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges…",
                         lines=3,
                         max_lines=5,
+                        show_label=False,
                         info="💡 Descripció",
                         elem_classes=["emphasized-input", "with-info"],
                     )
