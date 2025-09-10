@@ -39,94 +39,93 @@ def _toggle_confirm(uid_text):
 
 
 def commit_id(uid_text):
-    """
-    Activate the user session. Tabs become visible; if we detect that the user
-    already completed an analysis (i.e., has visible chat history or prior model
-    messages), we unlock the composer and ensure the tutor intro is present.
-    After confirming, hide the whole ID block.
-    """
     uid = (uid_text or "").strip()
     history = load_history(uid) or []
 
-    # Check if history indicates the conversation should be unlocked
-    has_visible = any(m.get("visible", False) for m in history)
+    has_visible   = any(m.get("visible", False) for m in history)
     has_any_model = any(m.get("role") in ("model", "assistant") for m in history)
 
     if uid and (has_visible or has_any_model):
-        # Ensure tutor intro exists if only invisible messages are found
         if not has_visible:
             chat_messages = ensure_conversation_intro(uid)
-            history = load_history(uid) or []
         else:
             chat_messages = history_to_gradio_messages(history)
         composer_update = gr.update(interactive=True)
+        analysis_tab_update = gr.update(interactive=True)
+        tabs_update = gr.update(visible=True, selected="analysis")   # ⬅️ go directly
     else:
         chat_messages = history_to_gradio_messages(history)
         composer_update = gr.update(interactive=False)
+        analysis_tab_update = gr.update(interactive=False)
+        tabs_update = gr.update(visible=True, selected="config")     # default to config
 
     if uid:
-        # Hide the entire ID block once confirmed
         id_block_update = gr.update(visible=False)
-        tabs_update = gr.update(visible=True)
-        input_update = gr.update(visible=False)
+        input_update  = gr.update(visible=False)
         button_update = gr.update(visible=False)
-        content_update = gr.update(visible=False, value=f"**{uid}**")  # kept but hidden
+        content_update = gr.update(visible=False, value=f"**{uid}**")
     else:
         id_block_update = gr.update(visible=True)
-        tabs_update = gr.update(visible=False)
-        input_update = gr.update(visible=True)
+        input_update  = gr.update(visible=True)
         button_update = gr.update(visible=True)
         content_update = gr.update(visible=False)
 
     return (
-        id_block_update,              # 🔹 id_block visibility (hide after confirm)
-        tabs_update,                  # wrapper tabs visibility
-        composer_update,              # composer lock/unlock based on history
-        uid,                          # active_user_id
-        chat_messages,                # chat history for Chatbot
-        input_update,                 # user_id_input visibility
-        button_update,                # confirm_id_btn visibility
-        content_update,               # id_content (kept but hidden after confirm)
+        id_block_update,      # id_block
+        tabs_update,          # tabs_wrapper (now includes selected)
+        composer_update,      # composer
+        uid,                  # active_user_id
+        chat_messages,        # chat
+        analysis_tab_update,  # analysis_tab interactive
+        input_update,         # user_id_input
+        button_update,        # confirm_id_btn
+        content_update,       # id_content
     )
 
 
 def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
+    """
+    3-step generator:
+      1) Show overlay
+      2) Return results + enable & select Analysis tab + unlock composer + hide overlay
+      3) (Optional) no-op or additional UI polish
+    """
     # Step 1: show overlay / loading
     yield (
-        "**Analitzant les imatges..., espereu un moment**",
-        [],
-        gr.update(),                  # analysis_tab
-        gr.update(),                  # composer
-        gr.update(),                  # tabs_wrapper
-        gr.update(visible=True),      # 🔵 SHOW overlay
+        "**Analitzant les imatges..., espereu un moment**",  # llm_output
+        [],                                                  # chat
+        gr.update(),                                         # analysis_tab (no change yet)
+        gr.update(),                                         # composer
+        gr.update(),                                         # tabs_wrapper
+        gr.update(visible=True),                             # wait_overlay
     )
 
-    # ⬇️ Afegit: espera simulada per debugging / demo
     if DEBUG_FAKE_WAIT_SECONDS and DEBUG_FAKE_WAIT_SECONDS > 0:
         time.sleep(DEBUG_FAKE_WAIT_SECONDS)
 
-    # Work real (o DEBUG_LLM_OUTPUT si DEBUG_MODE = True)
+    # Work real (or DEBUG_LLM_OUTPUT if DEBUG_MODE=True)
     text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
     chat_messages = ensure_conversation_intro(uid)
 
-    # Step 2: results + unlock + HIDE overlay
+    # Step 2: results + unlock composer + enable & select Analysis tab + hide overlay
+    # IMPORTANT ORDER for Gradio 5: first make the tab interactive, THEN select it on the Tabs container.
     yield (
-        text,
-        chat_messages,
-        gr.update(),
-        gr.update(interactive=True),
-        gr.update(),
-        gr.update(visible=False),     # 🔵 HIDE overlay
+        text,                                               # llm_output
+        chat_messages,                                      # chat
+        gr.update(interactive=True),                        # analysis_tab -> enable
+        gr.update(interactive=True),                        # composer -> unlock
+        gr.update(selected="analysis"),                     # tabs_wrapper -> SELECT "Anàlisi" tab by id
+        gr.update(visible=False),                           # wait_overlay -> hide
     )
 
-    # Step 3: switch to Anàlisi
+    # Step 3: (Optional) nothing else to change; keeping generator signature
     yield (
         gr.update(),
         gr.update(),
         gr.update(),
         gr.update(),
-        gr.update(selected=1),
-        gr.update(),                  # overlay unchanged
+        gr.update(),  # leave currently selected tab as-is
+        gr.update(),
     )
 
 
@@ -182,7 +181,7 @@ def main():
         Aquest identificador s’utilitzarà per a poder desar i recuperar la conversa"""
             )
             id_content = gr.Markdown("", visible=False)
-            with gr.Row(elem_classes=["id-input-row"]):   # 🔹 add custom class
+            with gr.Row(elem_classes=["id-input-row"]):
                 user_id_input = gr.Textbox(
                     placeholder="Escriu el teu ID…",
                     show_label=False,
@@ -195,14 +194,14 @@ def main():
                     "Començar",
                     variant="primary",
                     size="lg",
-                    elem_classes=["purple-button", "id-confirm-btn"],  # 🔹 add helper class
+                    elem_classes=["purple-button", "id-confirm-btn"],
                     interactive=False,
                     scale=1,
                 )
-        # ---------- Tabs ----------
+
+        # ---------- Tabs (use gr.Tabs + gr.Tab with ids) ----------
         with gr.Tabs(elem_classes=["main-tabs"], visible=False) as tabs_wrapper:
-            # ===== Tab: Configuració =====
-            with gr.TabItem("Configuració"):
+            with gr.Tab("Configuració", id="config"):
                 # 1) Classification
                 gr.Markdown("### 1. Selecciona la pràctica", elem_classes=["section-title"])
                 classification = gr.Dropdown(
@@ -210,7 +209,6 @@ def main():
                     label="📋 Classificació d'Imatges",
                     show_label=False,
                     value=None,
-                    # info="Quina pràctica vols analitzar?",
                     elem_classes=["visible-dropdown", "with-info", "larger-font", "section-card"],
                 )
 
@@ -297,7 +295,6 @@ def main():
                     lines=3,
                     max_lines=5,
                     show_label=False,
-                    # info="Descripció",
                     elem_classes=["emphasized-input", "with-info", "larger-font", "section-card"],
                 )
 
@@ -324,8 +321,8 @@ def main():
                     elem_classes=["analysis-section", "llm-output", "result-card"],
                 )
 
-            # ===== Tab: Anàlisi (chat) — visible but locked until analysis done =====
-            with gr.TabItem("Anàlisi") as analysis_tab:
+            # ===== Tab: Anàlisi (chat) — rendered but disabled until analysis done =====
+            with gr.Tab("Anàlisi", id="analysis", interactive=False) as analysis_tab:
                 chat = gr.Chatbot(
                     type="messages",
                     label="Sessió de tutoria",
@@ -346,18 +343,20 @@ def main():
                 )
 
         # ---------- Event wiring ----------
+
         confirm_id_btn.click(
             fn=commit_id,
             inputs=[user_id_input],
             outputs=[
-                id_block,        # 🔹 hide block after confirm
-                tabs_wrapper,
-                composer,
-                active_user_id,
-                chat,
-                user_id_input,
-                confirm_id_btn,
-                id_content,
+                id_block,        # 0
+                tabs_wrapper,    # 1
+                composer,        # 2
+                active_user_id,  # 3
+                chat,            # 4
+                analysis_tab,    # 5 (enable/disable tab via interactive)
+                user_id_input,   # 6
+                confirm_id_btn,  # 7
+                id_content,      # 8
             ],
         )
         user_id_input.submit(
@@ -369,6 +368,7 @@ def main():
                 composer,
                 active_user_id,
                 chat,
+                analysis_tab,
                 user_id_input,
                 confirm_id_btn,
                 id_content,
@@ -415,7 +415,7 @@ def main():
                 outputs=[analyze_btn, status_message],
             )
 
-        # 4) Analyze click triggers LLM + updates chat + unlocks composer + switches tab (3-step)
+        # 4) Analyze click triggers LLM + updates chat + unlocks composer + enables & selects Anàlisi tab (3-step)
         analyze_btn.click(
             fn=analyze_and_close,
             inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
