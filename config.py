@@ -28,7 +28,7 @@ PROMPT_MAGAZINE = "prompts/prompt_conversation_v2.txt"
 MAX_IMAGES = 20
 
 # --- Debugging ---
-DEBUG_MODE = False
+DEBUG_MODE = True
 DEBUG_FAKE_WAIT_SECONDS = 5
 DEBUG_LLM_OUTPUT = """
 ## Anàlisi d'Imatges de Prova

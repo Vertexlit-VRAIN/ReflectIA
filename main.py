@@ -19,7 +19,7 @@ from gradio_callbacks import (
 )
 from history_manager import load_history
 
-# Labels for the global ID accordion
+# (Kept for reference; no longer used as an accordion)
 PENDING_LABEL = "🔴 ID pendent"
 ACTIVE_LABEL_PREFIX = "🟢 ID actiu"
 
@@ -32,11 +32,18 @@ def _load_custom_css(path: str) -> str:
         return ""
 
 
+def _toggle_confirm(uid_text):
+    """Enable the confirm button only when there is some ID typed."""
+    uid = (uid_text or "").strip()
+    return gr.update(interactive=bool(uid))
+
+
 def commit_id(uid_text):
     """
     Activate the user session. Tabs become visible; if we detect that the user
     already completed an analysis (i.e., has visible chat history or prior model
     messages), we unlock the composer and ensure the tutor intro is present.
+    After confirming, hide the whole ID block.
     """
     uid = (uid_text or "").strip()
     history = load_history(uid) or []
@@ -58,26 +65,30 @@ def commit_id(uid_text):
         composer_update = gr.update(interactive=False)
 
     if uid:
-        acc_update = gr.update(label=f"{ACTIVE_LABEL_PREFIX}", open=False)
-        content_update = gr.update(value=f"**{uid}**", visible=True)
+        # Hide the entire ID block once confirmed
+        id_block_update = gr.update(visible=False)
+        tabs_update = gr.update(visible=True)
         input_update = gr.update(visible=False)
         button_update = gr.update(visible=False)
+        content_update = gr.update(visible=False, value=f"**{uid}**")  # kept but hidden
     else:
-        acc_update = gr.update(label=PENDING_LABEL, open=True)
-        content_update = gr.update(visible=False)
+        id_block_update = gr.update(visible=True)
+        tabs_update = gr.update(visible=False)
         input_update = gr.update(visible=True)
         button_update = gr.update(visible=True)
+        content_update = gr.update(visible=False)
 
     return (
-        acc_update,                    # accordion update
-        gr.update(visible=bool(uid)),  # wrapper tabs visibility
-        composer_update,               # composer lock/unlock based on history
-        uid,                           # active_user_id
-        chat_messages,                 # chat history for Chatbot
-        input_update,                  # user_id_input visibility
-        button_update,                 # confirm_id_btn visibility
-        content_update,                # id_content update
+        id_block_update,              # 🔹 id_block visibility (hide after confirm)
+        tabs_update,                  # wrapper tabs visibility
+        composer_update,              # composer lock/unlock based on history
+        uid,                          # active_user_id
+        chat_messages,                # chat history for Chatbot
+        input_update,                 # user_id_input visibility
+        button_update,                # confirm_id_btn visibility
+        content_update,               # id_content (kept but hidden after confirm)
     )
+
 
 def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
     # Step 1: show overlay / loading
@@ -87,7 +98,7 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
         gr.update(),                  # analysis_tab
         gr.update(),                  # composer
         gr.update(),                  # tabs_wrapper
-        gr.update(visible=True),      # 🔵 SHOW overlay  (si vas seguir el pas anterior de l’overlay)
+        gr.update(visible=True),      # 🔵 SHOW overlay
     )
 
     # ⬇️ Afegit: espera simulada per debugging / demo
@@ -117,6 +128,7 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
         gr.update(selected=1),
         gr.update(),                  # overlay unchanged
     )
+
 
 def main():
     custom_css = _load_custom_css("static/styles.css")
@@ -163,28 +175,30 @@ def main():
             visible=False,
         )
 
-        # ---------- Global ID accordion ----------
-        with gr.Accordion(PENDING_LABEL, open=True) as id_accordion:
-            with gr.Row(elem_classes=["id-row"]):
-                with gr.Column(scale=4, elem_classes=["with-info"]):
-                    gr.Markdown("""# Identificador d'Estudiant
-                        Aquest identificador s’utilitzarà per a poder desar i recuperar la conversa
-                                """)
-                    id_content = gr.Markdown("", visible=False)
-                    user_id_input = gr.Textbox(
-                        placeholder="Escriu el teu ID…",
-                        show_label=False,
-                        lines=1,
-                        max_lines=1,
-                        elem_classes=["emphasized-input", "larger-font"],
-                    )
-                    confirm_id_btn = gr.Button(
-                        "Començar",
-                        variant="primary",
-                        size="lg",
-                        elem_classes=["purple-button"],
-                    )
-
+        # ---------- Global ID block (no accordion) ----------
+        with gr.Column(elem_classes=["id-block"]) as id_block:
+            gr.Markdown(
+                """# Introdueix el teu ID
+        Aquest identificador s’utilitzarà per a poder desar i recuperar la conversa"""
+            )
+            id_content = gr.Markdown("", visible=False)
+            with gr.Row(elem_classes=["id-input-row"]):   # 🔹 add custom class
+                user_id_input = gr.Textbox(
+                    placeholder="Escriu el teu ID…",
+                    show_label=False,
+                    lines=1,
+                    max_lines=1,
+                    elem_classes=["emphasized-input", "larger-font", "id-textbox"],
+                    scale=4,
+                )
+                confirm_id_btn = gr.Button(
+                    "Començar",
+                    variant="primary",
+                    size="lg",
+                    elem_classes=["purple-button", "id-confirm-btn"],  # 🔹 add helper class
+                    interactive=False,
+                    scale=1,
+                )
         # ---------- Tabs ----------
         with gr.Tabs(elem_classes=["main-tabs"], visible=False) as tabs_wrapper:
             # ===== Tab: Configuració =====
@@ -336,7 +350,7 @@ def main():
             fn=commit_id,
             inputs=[user_id_input],
             outputs=[
-                id_accordion,
+                id_block,        # 🔹 hide block after confirm
                 tabs_wrapper,
                 composer,
                 active_user_id,
@@ -350,7 +364,7 @@ def main():
             fn=commit_id,
             inputs=[user_id_input],
             outputs=[
-                id_accordion,
+                id_block,
                 tabs_wrapper,
                 composer,
                 active_user_id,
@@ -359,6 +373,13 @@ def main():
                 confirm_id_btn,
                 id_content,
             ],
+        )
+
+        # Enable/disable confirm button as the user types
+        user_id_input.change(
+            fn=_toggle_confirm,
+            inputs=[user_id_input],
+            outputs=[confirm_id_btn],
         )
 
         # collect the dynamic outputs for thumbs + dropdowns
@@ -406,4 +427,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
