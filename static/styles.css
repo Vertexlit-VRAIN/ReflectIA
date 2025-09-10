@@ -151,7 +151,7 @@ button[variant="primary"]:hover,
 /* ===================== Cards & Panels ===================== */
 .section-card{
   background: #1b1b1e !important;    /* flat */
-  border: 1px solid var(--line) !important;
+  /* border: 1px solid var(--line) !important; */
   border-radius: 4px !important;
   padding: 14px !important;
 }
@@ -277,6 +277,16 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
   -webkit-touch-callout:none !important;
 }
 .chatbot-surface, .gr-chatbot{ -webkit-user-modify: read-only !important; }
+
+
+.chatbot-surface [data-testid="block-clear"],
+.chatbot-surface [data-testid="toolbox"] button[aria-label="Clear"],
+.chatbot-surface button[title="Clear"]{
+  display: none !important;
+}
+
+
+.icon-button-wrapper.top-panel { display: none !important; }
 
 /* ===================== Mobile ===================== */
 @media (max-width: 768px){

@@ -323,7 +323,8 @@ def main():
             with gr.Tab("Anàlisi", id="analysis", interactive=False) as analysis_tab:
                 chat = gr.Chatbot(
                     type="messages",
-                    label="Sessió de tutoria",
+                    # label="Sessió de tutoria",
+                    show_label=False,
                     height=640,
                     elem_classes=["chatbot-surface"],
                 )
