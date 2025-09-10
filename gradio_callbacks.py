@@ -5,7 +5,7 @@ Callback functions for the Gradio interface.
 import gradio as gr
 
 from ai_providers import call_ai_model
-from config import AI_PROVIDER, DEBUG_LLM_OUTPUT, DEBUG_MODE, MAX_IMAGES
+from config import AI_PROVIDER, DEBUG_LLM_OUTPUT, DEBUG_MODE, MAX_IMAGES, PROMPT_MAGAZINE, PROMPT_SOCIAL, PROMPT_CONVERSATION
 from history_manager import load_history, save_history
 from image_utils import encode_image_to_base64
 
@@ -102,9 +102,9 @@ def generate_llm_response(
             return f"❌ **Error**: No s'ha pogut processar la imatge {i + 1}"
 
     if classification == "Pràctica 1. Revista":
-        prompt_file = "prompts/prompt_magazine_full.txt"
+        prompt_file = PROMPT_MAGAZINE
     elif classification == "Pràctica 2. Xarxes Socials":
-        prompt_file = "prompts/prompt_social_full.txt"
+        prompt_file = PROMPT_SOCIAL
     else:
         return "❌ **Error**: Classificació no vàlida."
 
@@ -260,7 +260,7 @@ def handle_conversation_message(message, history, user_id):
     history = load_history(user_id) or []
 
     try:
-        with open("prompts/prompt_conversation.txt", "r", encoding="utf-8") as f:
+        with open(PROMPT_CONVERSATION, "r", encoding="utf-8") as f:
             conversation_prompt = f.read()
     except FileNotFoundError:
         gr.Warning("Error: No s'ha trobat el fitxer de prompt de conversa.")

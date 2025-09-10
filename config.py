@@ -18,12 +18,17 @@ TIMEOUT_SECONDS = 600
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash-lite"
 
+# --- Prompts ---
+PROMPT_CONVERSATION = "prompts/prompt_conversation_v2.txt"
+PROMPT_SOCIAL = "prompts/prompt_social_full_v2.txt"
+PROMPT_MAGAZINE = "prompts/prompt_conversation_v2.txt"
+
 
 # --- UI Configuration ---
 MAX_IMAGES = 20
 
 # --- Debugging ---
-DEBUG_MODE = True
+DEBUG_MODE = False
 DEBUG_FAKE_WAIT_SECONDS = 5
 DEBUG_LLM_OUTPUT = """
 ## Anàlisi d'Imatges de Prova
