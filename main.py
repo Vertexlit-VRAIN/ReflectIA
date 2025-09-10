@@ -168,7 +168,7 @@ def main():
               <div class="wait-card">
                 <div class="wait-title">Analitzant…</div>
                 <div class="wait-bar"><span class="bar"></span></div>
-                <div class="wait-tip">Això pot trigar uns segons</div>
+                <div class="wait-tip">Açò pot trigar uns segons</div>
               </div>
             </div>
             """,
@@ -204,18 +204,18 @@ def main():
             # ===== Tab: Configuració =====
             with gr.TabItem("Configuració"):
                 # 1) Classification
-                gr.Markdown("### 1) Selecciona la pràctica", elem_classes=["section-title"])
+                gr.Markdown("### 1. Selecciona la pràctica", elem_classes=["section-title"])
                 classification = gr.Dropdown(
                     choices=["Pràctica 1. Revista", "Pràctica 2. Xarxes Socials"],
                     label="📋 Classificació d'Imatges",
                     show_label=False,
                     value=None,
-                    info="Quina pràctica vols analitzar?",
+                    # info="Quina pràctica vols analitzar?",
                     elem_classes=["visible-dropdown", "with-info", "larger-font", "section-card"],
                 )
 
                 # 2) Upload
-                gr.Markdown("### 2) Puja les imatges", elem_classes=["section-title"])
+                gr.Markdown("### 2. Puja les imatges", elem_classes=["section-title"])
                 with gr.Row(elem_classes=["section-card"]):
                     with gr.Column(scale=4):
                         files = gr.File(
@@ -228,7 +228,7 @@ def main():
                         )
 
                 # 3) Tag each image
-                gr.Markdown("### 3) Assigna un tipus a cada imatge", elem_classes=["section-title"])
+                gr.Markdown("### 3. Assigna la categoria corresponent a cada imatge", elem_classes=["section-title"])
                 with gr.Row(elem_classes=["section-card"]):
                     rows, thumbnail_images, type_dropdowns = [], [], []
                     for i in range(0, MAX_IMAGES, 2):
@@ -290,14 +290,14 @@ def main():
                                 type_dropdowns.append(dd_b)
 
                 # 4) Description
-                gr.Markdown("### 4) Descripció del projecte", elem_classes=["section-title"])
+                gr.Markdown("### 4. Descriu el disseny", elem_classes=["section-title"])
                 user_description = gr.Textbox(
                     label="📝 Descripció",
-                    placeholder="Descriviu què heu fet o qualsevol context addicional sobre aquestes imatges…",
+                    placeholder="Descriu aquella informació rellevant per a l’anàlisi, com per exemple: la temàtica escollida, què es vol transmetre, l’estil gràfic que es busca plasmar...",
                     lines=3,
                     max_lines=5,
                     show_label=False,
-                    info="Descripció",
+                    # info="Descripció",
                     elem_classes=["emphasized-input", "with-info", "larger-font", "section-card"],
                 )
 

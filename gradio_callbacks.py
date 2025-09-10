@@ -162,7 +162,7 @@ def update_type_dropdowns(files, classification):
 
     # ---- Type options depending on classification ----
     if classification == "Pràctica 1. Revista":
-        type_options = ["Portada", "Pàgines interiors"]
+        type_options = ["Portada", "Pàgines interiors", "Contraportada"]
     elif classification == "Pràctica 2. Xarxes Socials":
         type_options = [
             "Newsletter",
@@ -233,16 +233,16 @@ def update_button_and_status(
     missing = None
     if not has_id:
         missing = "Activa l’ID per començar."
+    elif not has_class:
+        missing = "Selecciona la pràctica."
     elif not has_files:
         missing = "Puja almenys una imatge."
-    elif not has_class:
-        missing = "Selecciona la classificació."
     elif not all_typed:
-        missing = "Assigna un tipus a **cada** imatge."
+        missing = "Assigna una categoria a **cada** imatge."
     elif not has_desc:
-        missing = "Afegeix una breu descripció."
+        missing = "Afegeix una breu descripció del disseny."
 
-    status_out = gr.update(value=f"ℹ️ {missing}" if missing else "", visible=not ready)
+    status_out = gr.update(value=f"{missing}" if missing else "", visible=not ready)
     return (gr.update(interactive=ready), status_out)
 
 def format_analysis_results(result, classification, files, image_info):
