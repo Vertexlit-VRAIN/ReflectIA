@@ -1,0 +1,65 @@
+[
+  {
+    "role": "model",
+    "parts": [
+      "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
+    ],
+    "visible": true
+  },
+  {
+    "role": "user",
+    "parts": [
+      "Hola"
+    ],
+    "visible": true
+  },
+  {
+    "role": "model",
+    "parts": [
+      "🧪 **Mode debug**\n\nText rebut: Hola\nImatges adjuntes: 0"
+    ],
+    "visible": true
+  },
+  {
+    "role": "user",
+    "parts": [
+      "Peco"
+    ],
+    "visible": true
+  },
+  {
+    "role": "model",
+    "parts": [
+      "🧪 **Mode debug**\n\nText rebut: Peco\nImatges adjuntes: 0"
+    ],
+    "visible": true
+  },
+  {
+    "role": "user",
+    "parts": [
+      "Paco"
+    ],
+    "visible": true
+  },
+  {
+    "role": "model",
+    "parts": [
+      "🧪 **Mode debug**\n\nText rebut: Paco\nImatges adjuntes: 0"
+    ],
+    "visible": true
+  },
+  {
+    "role": "user",
+    "parts": [
+      "Pico"
+    ],
+    "visible": true
+  },
+  {
+    "role": "model",
+    "parts": [
+      "🧪 **Mode debug**\n\nText rebut: Pico\nImatges adjuntes: 0"
+    ],
+    "visible": true
+  }
+]

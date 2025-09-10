@@ -1,0 +1,11 @@
+{
+  "classification": "Pràctica 1. Revista",
+  "description": "213",
+  "files": [
+    {
+      "path": "data/12345/files/1Portada.jpg",
+      "type": "Portada"
+    }
+  ],
+  "analysis": "\n## Anàlisi d'Imatges de Prova\n\nAquesta és una resposta de prova per a la depuració de la interfície.\n\n### Imatge 1: portada.jpg\n\n*   **Qualitat Visual**: Bona\n*   **Adequació**: Correcta\n*   **Recomanacions**:\n    *   Millorar el contrast del títol.\n    *   Utilitzar una imatge de més resolució.\n\n### Imatge 2: interior.jpg\n\n*   **Qualitat Visual**: Excel·lent\n*   **Adequació**: Perfecta\n*   **Recomanacions**:\n    *   Cap recomanació. El disseny és excel·lent.\n"
+}

@@ -6,8 +6,16 @@ import gradio as gr
 
 from ai_providers import call_ai_model
 from config import AI_PROVIDER, DEBUG_LLM_OUTPUT, DEBUG_MODE, MAX_IMAGES, PROMPT_MAGAZINE, PROMPT_SOCIAL, PROMPT_CONVERSATION
-from history_manager import load_history, save_history
 from image_utils import encode_image_to_base64
+
+import os, shutil
+from history_manager import (
+    load_history,
+    save_history,
+    load_state,
+    save_state,
+    get_user_files_dir,
+)
 
 
 def history_to_gradio_messages(history):
@@ -32,6 +40,7 @@ def history_to_gradio_messages(history):
     return msgs
 
 
+
 def generate_llm_response(
     user_id,
     files,
@@ -40,67 +49,43 @@ def generate_llm_response(
     *type_selections,
     progress=gr.Progress(),
 ):
-    if DEBUG_MODE:
-        if user_id:
-            h = load_history(user_id) or []
-            h.append(
-                {
-                    "role": "user",
-                    "parts": ["(DEBUG) Sol·licitud d'anàlisi"],
-                    "visible": False,
-                }
-            )
-            h.append({"role": "model", "parts": [DEBUG_LLM_OUTPUT], "visible": False})
-            save_history(user_id, h)
-        return DEBUG_LLM_OUTPUT
-
-
+    # --- Validation (shared for debug & normal) ---
     if files:
         files = [f for f in files if f is not None]
     if not files:
         return "❌ **Error**: Si us plau, pugeu almenys una imatge per a l'anàlisi."
 
     if not user_id:
-        return (
-            "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
-        )
+        return "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
 
     if not classification:
         return "❌ **Error**: Si us plau, seleccioneu primer una classificació."
 
-    valid_files = []
-    valid_types = []
+    types = []
     for i, file in enumerate(files):
-        if type_selections[i] is not None and type_selections[i] != "":
-            valid_files.append(file)
-            valid_types.append(type_selections[i])
+        t = type_selections[i] if i < len(type_selections) else None
+        types.append(t)
 
-    if not valid_files:
-        return (
-            "❌ **Error**: Si us plau, especifiqueu el tipus per a almenys una imatge."
-        )
+    if not all(t not in (None, "") for t in types):
+        return "❌ **Error**: Assigna una categoria a **cada** imatge."
 
-    images_base64 = []
-    image_info = []
+    # --- Persist copies of uploaded files ---
+    user_dir = get_user_files_dir(user_id)
+    os.makedirs(user_dir, exist_ok=True)
+    persisted_paths = []
+    for f in files:
+        src = f.name if hasattr(f, "name") else str(f)
+        if not src or not os.path.exists(src):
+            continue
+        dst = os.path.join(user_dir, os.path.basename(src))
+        if os.path.abspath(src) != os.path.abspath(dst):
+            try:
+                shutil.copy2(src, dst)
+            except Exception:
+                dst = src
+        persisted_paths.append(dst)
 
-    for i, file in enumerate(valid_files):
-        if hasattr(file, "name"):
-            image_path = file.name
-        else:
-            image_path = str(file)
-
-        base64_result = encode_image_to_base64(image_path)
-        if isinstance(base64_result, dict) and "error" in base64_result:
-            return base64_result["error"]
-        elif base64_result:
-            images_base64.append(base64_result)
-            filename = (
-                image_path.split("/")[-1] if "/" in image_path else f"Image {i + 1}"
-            )
-            image_info.append(f"{filename} - {valid_types[i]}")
-        else:
-            return f"❌ **Error**: No s'ha pogut processar la imatge {i + 1}"
-
+    # --- Prepare prompt (shared) ---
     if classification == "Pràctica 1. Revista":
         prompt_file = PROMPT_MAGAZINE
     elif classification == "Pràctica 2. Xarxes Socials":
@@ -117,8 +102,7 @@ def generate_llm_response(
     context = f"Classificació: {classification}"
     if user_description and user_description.strip():
         context += f"\nDescripció de l'usuari: {user_description.strip()}"
-
-    context += f"\nImatges a analitzar: {', '.join(image_info)}"
+    context += f"\nImatges a analitzar: {', '.join(os.path.basename(p) + ' - ' + str(types[i]) for i, p in enumerate(persisted_paths))}"
 
     prompt = f"""{base_prompt}
 
@@ -129,16 +113,35 @@ def generate_llm_response(
 Analitza les imatges proporcionades seguint les directrius del prompt anterior.
 """
 
-    history = load_history(user_id) or []
+    # --- Main difference: AI call vs. placeholder ---
+    if DEBUG_MODE:
+        result = DEBUG_LLM_OUTPUT
+    else:
+        # Encode for model
+        images_base64 = []
+        for p in persisted_paths:
+            b64 = encode_image_to_base64(p)
+            if isinstance(b64, dict) and "error" in b64:
+                return b64["error"]
+            images_base64.append(b64)
 
-    result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
+        history = load_history(user_id) or []
+        result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
 
-    history.append({"role": "user", "parts": [prompt], "visible": False})
-    history.append({"role": "model", "parts": [result], "visible": False})
+        # Append invisible history
+        history.append({"role": "user", "parts": [prompt], "visible": False})
+        history.append({"role": "model", "parts": [result], "visible": False})
+        save_history(user_id, history)
 
-    save_history(user_id, history)
+    # --- Persist full state (identical for both modes) ---
+    save_state(user_id, {
+        "classification": classification,
+        "description": user_description,
+        "files": [{"path": persisted_paths[i], "type": types[i]} for i in range(len(persisted_paths))],
+        "analysis": result,
+    })
 
-    return format_analysis_results(result, classification, files, image_info)
+    return result
 
 
 def update_type_dropdowns(files, classification):
@@ -148,19 +151,12 @@ def update_type_dropdowns(files, classification):
 
     num_rows = (MAX_IMAGES + 1) // 2
 
-    # ---- SAFE DEFAULTS when no classification selected ----
     if not classification:
-        # rows hidden
         row_updates = [gr.update(visible=False)] * num_rows
-        # all thumbs hidden and cleared
         image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
-        # all dropdowns hidden, value cleared, but choices set to a harmless non-empty list
-        dropdown_updates = [
-            gr.update(visible=False, choices=["—"], value=None)
-        ] * MAX_IMAGES
+        dropdown_updates = [gr.update(visible=False, choices=["—"])] * MAX_IMAGES
         return row_updates + image_updates + dropdown_updates
 
-    # ---- Type options depending on classification ----
     if classification == "Pràctica 1. Revista":
         type_options = ["Portada", "Pàgines interiors", "Contraportada"]
     elif classification == "Pràctica 2. Xarxes Socials":
@@ -176,14 +172,10 @@ def update_type_dropdowns(files, classification):
     else:
         type_options = ["—"]
 
-    # Start with everything hidden/cleared (safe)
     row_updates = [gr.update(visible=False)] * num_rows
     image_updates = [gr.update(visible=False, value=None)] * MAX_IMAGES
-    dropdown_updates = [
-        gr.update(visible=False, choices=["—"], value=None)
-    ] * MAX_IMAGES
+    dropdown_updates = [gr.update(visible=False, choices=["—"])] * MAX_IMAGES
 
-    # Reveal only the needed slots, with real choices
     for i in range(image_count):
         row_idx = i // 2
         if row_idx < num_rows:
@@ -195,10 +187,10 @@ def update_type_dropdowns(files, classification):
         if "/" in filename:
             filename = filename.split("/")[-1]
 
+        # NOTE: do NOT pass value=... so restored values persist
         dropdown_updates[i] = gr.update(
             visible=True,
             choices=type_options,
-            value=None,
             label=f"Tipus per a {filename}",
             show_label=False,
         )
@@ -343,3 +335,43 @@ def ensure_conversation_intro(user_id):
         })
         save_history(user_id, history)
     return history_to_gradio_messages(history)
+
+
+def restore_config_for_user(user_id, max_images=MAX_IMAGES):
+    """
+    Loads states/<id>.json and returns:
+    - classification value
+    - files value (list of paths)
+    - user_description value
+    - llm_output value (analysis)
+    - one output per type dropdown (value for each, length = MAX_IMAGES)
+    """
+    state = load_state(user_id) or {
+        "classification": None,
+        "description": "",
+        "files": [],
+        "analysis": "Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…",
+    }
+    classification_val = state.get("classification")
+    description_val = state.get("description") or ""
+    analysis_val = state.get("analysis") or "Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…"
+    file_paths = [f.get("path") for f in (state.get("files") or []) if f.get("path")]
+    types = [f.get("type") for f in (state.get("files") or [])]
+
+    # Build dropdown value updates up to MAX_IMAGES
+    dd_values = []
+    for i in range(max_images):
+        v = types[i] if i < len(types) else None
+        dd_values.append(gr.update(value=v))
+
+    return (classification_val, file_paths, description_val, analysis_val, *dd_values)
+
+def disable_analyze_if_done(user_id):
+    """
+    If analysis is already saved for this user, disable the analyze button.
+    Otherwise, leave it unchanged.
+    """
+    state = load_state(user_id) or {}
+    if state.get("analysis"):
+        return gr.update(interactive=False)
+    return gr.update()  # no change
