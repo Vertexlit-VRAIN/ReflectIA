@@ -319,23 +319,41 @@ def handle_conversation_message(message, history, user_id):
 
 def ensure_conversation_intro(user_id):
     """
-    Ensure the tutor's intro message is present and visible so the chat
-    shows a welcome immediately after analysis unlocks.
+    Ensure both the system conversational prompt and the tutor's greeting
+    are present in history so the model starts with the right instructions.
     """
     history = load_history(user_id) or []
-    # If there is already any visible message, keep it.
     has_visible = any(m.get("visible", False) for m in history)
     if not has_visible:
-        history.append({
+        # Load system conversational prompt
+        try:
+            with open(PROMPT_CONVERSATION, "r", encoding="utf-8") as f:
+                conversation_prompt = f.read()
+        except FileNotFoundError:
+            conversation_prompt = "Ets un tutor de disseny que dona feedback als estudiants."
+
+        # Inject hidden system prompt for the model
+        system_prompt = {
+            "role": "user",
+            "parts": [conversation_prompt],
+            "visible": False,
+        }
+        history.append(system_prompt)
+
+        # Inject visible greeting for the student
+        greeting = {
             "role": "model",
             "parts": [
-                "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
+                "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. "
+                "Fes-me qualsevol pregunta o demana'm suggeriments."
             ],
             "visible": True,
-        })
-        save_history(user_id, history)
-    return history_to_gradio_messages(history)
+        }
+        history.append(greeting)
 
+        save_history(user_id, history)
+
+    return history_to_gradio_messages(history)
 
 def restore_config_for_user(user_id, max_images=MAX_IMAGES):
     """
