@@ -167,7 +167,9 @@ def main():
         with gr.Accordion(PENDING_LABEL, open=True) as id_accordion:
             with gr.Row(elem_classes=["id-row"]):
                 with gr.Column(scale=4, elem_classes=["with-info"]):
-                    gr.Markdown("#### 🧑‍🎓 Identificador d'Estudiant")
+                    gr.Markdown("""# Identificador d'Estudiant
+                        Aquest identificador s’utilitzarà per a poder desar i recuperar la conversa
+                                """)
                     id_content = gr.Markdown("", visible=False)
                     user_id_input = gr.Textbox(
                         placeholder="Escriu el teu ID…",
@@ -177,7 +179,7 @@ def main():
                         elem_classes=["emphasized-input", "larger-font"],
                     )
                     confirm_id_btn = gr.Button(
-                        "✓ Activar ID",
+                        "Començar",
                         variant="primary",
                         size="lg",
                         elem_classes=["purple-button"],
