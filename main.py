@@ -34,29 +34,44 @@ def _load_custom_css(path: str) -> str:
 
 def commit_id(uid_text):
     """
-    Activate the user session. Tabs become visible; the Anàlisi tab
-    is visible but the composer stays locked until analysis finishes.
+    Activate the user session. Tabs become visible; if we detect that the user
+    already completed an analysis (i.e., has visible chat history or prior model
+    messages), we unlock the composer and ensure the tutor intro is present.
     """
     uid = (uid_text or "").strip()
     history = load_history(uid) or []
-    chat_messages = history_to_gradio_messages(history)
+
+    # Check if history indicates the conversation should be unlocked
+    has_visible = any(m.get("visible", False) for m in history)
+    has_any_model = any(m.get("role") in ("model", "assistant") for m in history)
+
+    if uid and (has_visible or has_any_model):
+        # Ensure tutor intro exists if only invisible messages are found
+        if not has_visible:
+            chat_messages = ensure_conversation_intro(uid)
+            history = load_history(uid) or []
+        else:
+            chat_messages = history_to_gradio_messages(history)
+        composer_update = gr.update(interactive=True)
+    else:
+        chat_messages = history_to_gradio_messages(history)
+        composer_update = gr.update(interactive=False)
 
     if uid:
         acc_update = gr.update(label=f"{ACTIVE_LABEL_PREFIX}", open=False)
         content_update = gr.update(value=f"**{uid}**", visible=True)
-        # Keep composer locked until analysis is done
-        input_update = gr.update(visible=False)   # hide text input
-        button_update = gr.update(visible=False)  # hide button
+        input_update = gr.update(visible=False)
+        button_update = gr.update(visible=False)
     else:
         acc_update = gr.update(label=PENDING_LABEL, open=True)
         content_update = gr.update(visible=False)
-        input_update = gr.update(visible=True)    # show text input
-        button_update = gr.update(visible=True)   # show button
+        input_update = gr.update(visible=True)
+        button_update = gr.update(visible=True)
 
     return (
         acc_update,                    # accordion update
         gr.update(visible=bool(uid)),  # wrapper tabs visibility
-        gr.update(interactive=False),  # composer (locked)
+        composer_update,               # composer lock/unlock based on history
         uid,                           # active_user_id
         chat_messages,                 # chat history for Chatbot
         input_update,                  # user_id_input visibility

@@ -8,7 +8,7 @@ This application allows users to upload multiple images, classify them, and rece
 
 ## Installation
 
-To run this project, you need to have Python 3.13 or higher and `uv` installed. You can install the required dependencies using `uv`:
+To run this project, you need to have Python 3.10.x and `uv` installed. You can install the required dependencies using `uv`:
 
 ```bash
 uv sync

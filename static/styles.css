@@ -152,8 +152,14 @@ button[variant="primary"]:hover,
 .section-card{
   background: #1b1b1e !important;    /* flat */
   border: 1px solid var(--line) !important;
-  border-radius: var(--radius) !important;
+  border-radius: 4px !important;
   padding: 14px !important;
+}
+
+.block-background-fill{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Upload block */
