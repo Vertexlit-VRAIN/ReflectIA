@@ -18,12 +18,14 @@ body{
 }
 
 /* Center the app */
-.gradio-container{
-  width: min(1100px, 92vw);
-  margin: 26px auto 40px !important;
-  color:var(--ink);
-  --block-border-width:0;
-}
+/* .gradio-container{ */
+/*   width: min(1100px, 92vw); */
+/*   margin: 26px auto 40px !important; */
+/*   color:var(--ink); */
+/*   --block-border-width:0; */
+/* } */
+
+/* .gradio-container { width: min(1100px, 94vw); margin: 0 auto; } */
 
 /* ===================== Typography ===================== */
 .gradio-container,
@@ -412,4 +414,110 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
 .analysis-gallery .container{
   margin-left:auto !important;
   margin-right:auto !important;
+}
+
+/* -----------------------------------------------*/
+
+/* Fluid typography (keeps desktop size, scales down gracefully) */
+:root{
+  --step--1: clamp(.94rem, .88rem + .3vw, 1rem);
+  --step-0: clamp(1rem, .96rem + .45vw, 1.12rem);
+  --step-1: clamp(1.12rem, 1.02rem + .8vw, 1.22rem);
+}
+.gr-markdown,
+.gr-markdown p { font-size: var(--step-0) !important; }
+.analysis-section,
+.analysis-section p,
+.analysis-section li{ font-size: var(--step-1) !important; }
+
+/* Make all “cards” and inputs full-width on narrow screens */
+@media (max-width: 1024px){
+  .gradio-container { width: min(1200px, 96vw) !important; }
+  .section-card, .result-card { padding: 12px !important; }
+  .visible-dropdown .wrap, .emphasized-input .wrap { border-radius: 10px !important; }
+}
+
+/* Stack the two-column “thumbline” rows on small screens */
+@media (max-width: 900px){
+  .thumbline{ flex-direction: row !important; gap: 10px !important; }
+  /* Each thumbnail column becomes full-width row to avoid squish */
+  .thumbline > .gr-column{ min-width: 0 !important; }
+}
+
+/* Replace fixed image sizes with fluid squares */
+.thumbnail-container img,
+.thumbnail-container canvas {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+}
+
+/* Kill fixed Image component heights on small screens to avoid overflow */
+@media (max-width: 768px){
+  .thumbnail-container { box-shadow: none !important; }
+  .gradio-container{ width: 100% !important; padding: 8px !important; }
+  .gr-button{ width: 100% !important; }
+  .gr-textbox, .gr-dropdown{ font-size: 16px !important; }
+  .analyze-cta{ min-width: 0 !important; width: 100% !important; }
+}
+
+/* Analysis split: stack chat & gallery vertically on tablets/phones */
+@media (max-width: 1100px){
+  .analysis-split{ flex-direction: column !important; align-items: stretch !important; }
+  .analysis-split > .gr-column{ width: 100% !important; }
+  .analysis-gallery .container{ width: 100% !important; }
+}
+
+/* Gallery: let it breathe and prevent tiny previews */
+.analysis-gallery .container img{
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+/* File uploader: remove hard height on small screens */
+@media (max-width: 768px){
+  #file-uploader { height: auto !important; min-height: 140px !important; }
+}
+
+/* Tabs: prevent overflow and wrap */
+@media (max-width: 680px){
+  .main-tabs [role="tab"]{
+    padding: 8px 14px !important;
+    margin-right: 6px !important;
+    font-size: 0.98rem !important;
+  }
+  .main-tabs [role="tablist"]{
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+}
+
+/* Dropdowns: full width with clearer touch targets */
+@media (max-width: 900px){
+  .visible-dropdown .wrap { width: 100% !important; }
+  .vcenter-col{ align-items: stretch !important; }
+}
+
+/* ID row & buttons: keep single column and equal spacing */
+@media (max-width: 640px){
+  .id-input-row{ flex-direction: column !important; align-items: stretch !important; }
+  .id-confirm-btn{ width: 100% !important; }
+}
+
+/* Wait overlay: ensure it’s readable on phones */
+@media (max-width: 480px){
+  .wait-card{ padding: 16px !important; }
+  .wait-title{ font-size: 1rem !important; }
+  .wait-bar{ height: 8px !important; }
+}
+
+/* Respect users that prefer less animation */
+@media (prefers-reduced-motion: reduce){
+  .wait-bar::before{ animation: none !important; }
+}
+
+/* iOS safe areas */
+@supports(padding:max(0px)){
+  body{ padding-left: max(0px, env(safe-area-inset-left)); padding-right: max(0px, env(safe-area-inset-right)); }
 }
