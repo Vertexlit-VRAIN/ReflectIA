@@ -363,7 +363,7 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
 }
 
 
-/* ============ ID Input Row Alignment ============ */ .id-input-row {
+/* ============ ID Input Row Alignment ============ */
 .id-input-row{
   display:flex !important;
   align-items:center !important;   /* vertical centering */
@@ -391,4 +391,25 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
   border: 1px solid var(--line) !important;
   border-radius: 10px !important;
   padding: 8px !important;
+}
+
+
+/* Center the gallery column with the chat column */
+.analysis-split{
+  display:flex !important;         /* ensure flex on the row */
+  align-items:center !important;   /* vertical centering for children */
+}
+
+/* Make the right column center its content vertically */
+.analysis-split > .gr-column:last-child{
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+}
+
+/* Center the gallery horizontally within its column (nice on wide screens) */
+.analysis-gallery,
+.analysis-gallery .container{
+  margin-left:auto !important;
+  margin-right:auto !important;
 }

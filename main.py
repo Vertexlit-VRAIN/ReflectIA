@@ -328,7 +328,7 @@ def main():
             
             # ===== Tab: Anàlisi (chat) — rendered but disabled until analysis done =====
             with gr.Tab("Anàlisi", id="analysis", interactive=False) as analysis_tab:
-                with gr.Row():
+                with gr.Row(elem_classes=["analysis-split"]):
                     # LEFT: chat + composer
                     with gr.Column(scale=2):
                         chat = gr.Chatbot(
@@ -352,10 +352,10 @@ def main():
                     # RIGHT: gallery with uploaded images
                     with gr.Column(scale=1, min_width=260):
                         analysis_gallery = gr.Gallery(
-                            label="Imatges de la sessió",
-                            show_label=True,
+                            show_label=False,
                             columns=[1],         # one vertical strip
-                            height=640,
+                            rows=[3],
+                            height="auto",
                             preview=True,        # lightbox on click
                             allow_preview=True,
                             elem_classes=["analysis-gallery"],
