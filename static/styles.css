@@ -286,7 +286,7 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
 }
 
 
-.icon-button-wrapper.top-panel { display: none !important; }
+/* .icon-button-wrapper.top-panel { display: none !important; } */
 
 /* ===================== Mobile ===================== */
 @media (max-width: 768px){
@@ -332,6 +332,7 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
   height: 10px;
   border-radius: 999px;
   background: #202026;
+  margin-bottom: 8px;
   border: 1px solid #2b2b32;
   overflow: hidden;
 }
@@ -383,4 +384,11 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
   justify-content: center !important;
   align-self: center !important;    /* avoid stretching */
   padding: 0 22px !important;
+}
+
+.analysis-gallery .container {
+  background: #1b1b1e !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  padding: 8px !important;
 }

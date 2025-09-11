@@ -203,39 +203,22 @@ def update_type_dropdowns(files, classification):
 def update_button_and_status(
     user_id, files, classification, user_description, *type_selections
 ):
-    # Normalize
     files = [f for f in (files or []) if f is not None]
     has_files = len(files) > 0
     has_id = bool(user_id)
     has_class = bool(classification)
     has_desc = bool(user_description and user_description.strip())
 
-    # Cada imatge ha de tenir tipus (no nuls / no buits)
     needed = len(files)
-    selected = []
+    typed_ok = True
     for i in range(needed):
         t = type_selections[i] if i < len(type_selections) else None
-        if t is not None and str(t).strip() != "":
-            selected.append(t)
-    all_typed = (len(selected) == needed) and needed > 0
+        if t is None or str(t).strip() == "":
+            typed_ok = False
+            break
 
-    ready = has_id and has_files and has_class and all_typed and has_desc
-
-    # Missatge mínim quan falta alguna cosa
-    missing = None
-    if not has_id:
-        missing = "Activa l’ID per començar."
-    elif not has_class:
-        missing = "Selecciona la pràctica."
-    elif not has_files:
-        missing = "Puja almenys una imatge."
-    elif not all_typed:
-        missing = "Assigna una categoria a **cada** imatge."
-    elif not has_desc:
-        missing = "Afegeix una breu descripció del disseny."
-
-    status_out = gr.update(value=f"{missing}" if missing else "", visible=not ready)
-    return (gr.update(interactive=ready), status_out)
+    ready = has_id and has_files and has_class and typed_ok and has_desc
+    return gr.update(interactive=ready)
 
 def format_analysis_results(result, classification, files, image_info):
     return result
@@ -266,7 +249,7 @@ def handle_conversation_message(message, history, user_id):
             {
                 "role": "model",
                 "parts": [
-                    "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
+                    "Hola! A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
                 ],
                 "visible": True,
             },
@@ -344,7 +327,7 @@ def ensure_conversation_intro(user_id):
         greeting = {
             "role": "model",
             "parts": [
-                "Hola! Soc el teu tutor de disseny. A partir de l'anàlisi inicial, podem conversar sobre el teu treball. "
+                "Hola! A partir de l'anàlisi inicial, podem conversar sobre el teu treball. "
                 "Fes-me qualsevol pregunta o demana'm suggeriments."
             ],
             "visible": True,
@@ -382,7 +365,7 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
         v = types[i] if i < len(types) else None
         dd_values.append(gr.update(value=v))
 
-    return (classification_val, file_paths, description_val, analysis_val, *dd_values)
+    return (classification_val, file_paths, description_val, analysis_val, *dd_values, file_paths)
 
 def disable_analyze_if_done(user_id):
     """

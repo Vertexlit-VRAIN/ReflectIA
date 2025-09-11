@@ -39,6 +39,19 @@ def _toggle_confirm(uid_text):
     uid = (uid_text or "").strip()
     return gr.update(interactive=bool(uid))
 
+def _files_to_paths(files):
+    """Normalize Gradio File values (UploadedFile or str) to a list of paths."""
+    if not files:
+        return []
+    out = []
+    for f in files:
+        if f is None:
+            continue
+        # UploadedFile has .name; restored state gives plain paths (str)
+        p = getattr(f, "name", None) or str(f)
+        out.append(p)
+    return out
+
 
 def commit_id(uid_text):
     uid = (uid_text or "").strip()
@@ -165,7 +178,7 @@ def main():
               <div class="wait-card">
                 <div class="wait-title">Analitzant…</div>
                 <div class="wait-bar"><span class="bar"></span></div>
-                <div class="wait-tip">Açò pot trigar uns segons</div>
+                <div class="wait-tip">Agafa aire... que això va per llarg (uns segons!)</div>
               </div>
             </div>
             """,
@@ -296,13 +309,6 @@ def main():
                     elem_classes=["emphasized-input", "with-info", "larger-font", "section-card"],
                 )
 
-                # Minimal hint + centered Analyze button
-                with gr.Row(elem_classes=["analyze-bar"]):
-                    status_message = gr.Markdown(
-                        value="",
-                        visible=False,
-                        elem_classes=["status-message"],
-                    )
                 with gr.Row(elem_classes=["analyze-bar"]):
                     analyze_btn = gr.Button(
                         "🔍 Analitzar",
@@ -319,31 +325,44 @@ def main():
                     elem_classes=["analysis-section", "llm-output", "result-card"],
                 )
 
+            
             # ===== Tab: Anàlisi (chat) — rendered but disabled until analysis done =====
             with gr.Tab("Anàlisi", id="analysis", interactive=False) as analysis_tab:
-                chat = gr.Chatbot(
-                    type="messages",
-                    # label="Sessió de tutoria",
-                    show_label=False,
-                    height=640,
-                    elem_classes=["chatbot-surface"],
-                )
-                composer = gr.MultimodalTextbox(
-                    placeholder="Escriu un missatge o adjunta imatges…",
-                    file_count="multiple",
-                    file_types=["image"],
-                    show_label=False,
-                    interactive=False,  # unlocked after analysis
-                )
-                composer.submit(
-                    fn=handle_conversation_message,
-                    inputs=[composer, chat, active_user_id],
-                    outputs=[chat, composer],
-                )
+                with gr.Row():
+                    # LEFT: chat + composer
+                    with gr.Column(scale=2):
+                        chat = gr.Chatbot(
+                            type="messages",
+                            show_label=False,
+                            height=640,
+                            elem_classes=["chatbot-surface"],
+                        )
+                        composer = gr.Textbox(
+                            placeholder="Escriu un missatge",
+                            show_label=False,
+                            interactive=False,
+                            submit_btn=True,
+                        )
+                        composer.submit(
+                            fn=handle_conversation_message,
+                            inputs=[composer, chat, active_user_id],
+                            outputs=[chat, composer],
+                        )
+
+                    # RIGHT: gallery with uploaded images
+                    with gr.Column(scale=1, min_width=260):
+                        analysis_gallery = gr.Gallery(
+                            label="Imatges de la sessió",
+                            show_label=True,
+                            columns=[1],         # one vertical strip
+                            height=640,
+                            preview=True,        # lightbox on click
+                            allow_preview=True,
+                            elem_classes=["analysis-gallery"],
+                        )
 
         # ---------- Event wiring ----------
 
-        
         confirm_id_btn.click(
             fn=commit_id,
             inputs=[user_id_input],
@@ -354,7 +373,7 @@ def main():
         ).then(
             fn=restore_config_for_user,
             inputs=[active_user_id],
-            outputs=[classification, files, user_description, llm_output, *type_dropdowns],
+            outputs=[classification, files, user_description, llm_output, *type_dropdowns, analysis_gallery],
         ).then(
             fn=update_type_dropdowns,
             inputs=[files, classification],
@@ -362,12 +381,13 @@ def main():
         ).then(
             fn=update_button_and_status,
             inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-            outputs=[analyze_btn, status_message],
-        ).then(                                  # ⬅️ NEW
+            outputs=[analyze_btn],
+        ).then(
             fn=disable_analyze_if_done,
             inputs=[active_user_id],
             outputs=[analyze_btn],
         )
+
 
         user_id_input.submit(
             fn=commit_id,
@@ -379,7 +399,7 @@ def main():
         ).then(
             fn=restore_config_for_user,
             inputs=[active_user_id],
-            outputs=[classification, files, user_description, llm_output, *type_dropdowns],
+            outputs=[classification, files, user_description, llm_output, *type_dropdowns, analysis_gallery],
         ).then(
             fn=update_type_dropdowns,
             inputs=[files, classification],
@@ -387,8 +407,8 @@ def main():
         ).then(
             fn=update_button_and_status,
             inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-            outputs=[analyze_btn, status_message],
-        ).then(                                  # ⬅️ NEW
+            outputs=[analyze_btn],
+        ).then(
             fn=disable_analyze_if_done,
             inputs=[active_user_id],
             outputs=[analyze_btn],
@@ -412,7 +432,7 @@ def main():
         ).then(
             fn=update_button_and_status,
             inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-            outputs=[analyze_btn, status_message],
+            outputs=[analyze_btn],
         )
 
         # 2) FILES change (upload/delete): update UI, then recompute status
@@ -423,7 +443,11 @@ def main():
         ).then(
             fn=update_button_and_status,
             inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-            outputs=[analyze_btn, status_message],
+            outputs=[analyze_btn],
+        ).then(
+            fn=_files_to_paths,
+            inputs=[files],
+            outputs=[analysis_gallery],
         )
 
         # 3) Any field change should recompute status
@@ -431,7 +455,7 @@ def main():
             component.change(
                 fn=update_button_and_status,
                 inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-                outputs=[analyze_btn, status_message],
+                outputs=[analyze_btn],
             )
 
         # 4) Analyze click triggers LLM + updates chat + unlocks composer + enables & selects Anàlisi tab (3-step)
