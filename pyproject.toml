@@ -10,3 +10,8 @@ dependencies = [
     "gradio>=5.39.0",
     "pyparsing==3.2.2",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+]

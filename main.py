@@ -17,7 +17,7 @@ from gradio_callbacks import (
     update_type_dropdowns,
     ensure_conversation_intro,  # used to inject the tutor greeting on unlock
     restore_config_for_user,
-    disable_analyze_if_done
+    disable_analyze_if_done,
 )
 from history_manager import load_history
 
@@ -39,6 +39,7 @@ def _toggle_confirm(uid_text):
     uid = (uid_text or "").strip()
     return gr.update(interactive=bool(uid))
 
+
 def _files_to_paths(files):
     """Normalize Gradio File values (UploadedFile or str) to a list of paths."""
     if not files:
@@ -57,7 +58,7 @@ def commit_id(uid_text):
     uid = (uid_text or "").strip()
     history = load_history(uid) or []
 
-    has_visible   = any(m.get("visible", False) for m in history)
+    has_visible = any(m.get("visible", False) for m in history)
     has_any_model = any(m.get("role") in ("model", "assistant") for m in history)
 
     if uid and (has_visible or has_any_model):
@@ -67,36 +68,35 @@ def commit_id(uid_text):
             chat_messages = history_to_gradio_messages(history)
         composer_update = gr.update(interactive=True)
         analysis_tab_update = gr.update(interactive=True)
-        tabs_update = gr.update(visible=True, selected="analysis")   # ⬅️ go directly
+        tabs_update = gr.update(visible=True, selected="analysis")  # ⬅️ go directly
     else:
         chat_messages = history_to_gradio_messages(history)
         composer_update = gr.update(interactive=False)
         analysis_tab_update = gr.update(interactive=False)
-        tabs_update = gr.update(visible=True, selected="config")     # default to config
+        tabs_update = gr.update(visible=True, selected="config")  # default to config
 
     if uid:
         id_block_update = gr.update(visible=False)
-        input_update  = gr.update(visible=False)
+        input_update = gr.update(visible=False)
         button_update = gr.update(visible=False)
         content_update = gr.update(visible=False, value=f"**{uid}**")
     else:
         id_block_update = gr.update(visible=True)
-        input_update  = gr.update(visible=True)
+        input_update = gr.update(visible=True)
         button_update = gr.update(visible=True)
         content_update = gr.update(visible=False)
 
     return (
-        id_block_update,      # id_block
-        tabs_update,          # tabs_wrapper (now includes selected)
-        composer_update,      # composer
-        uid,                  # active_user_id
-        chat_messages,        # chat
+        id_block_update,  # id_block
+        tabs_update,  # tabs_wrapper (now includes selected)
+        composer_update,  # composer
+        uid,  # active_user_id
+        chat_messages,  # chat
         analysis_tab_update,  # analysis_tab interactive
-        input_update,         # user_id_input
-        button_update,        # confirm_id_btn
-        content_update,       # id_content
+        input_update,  # user_id_input
+        button_update,  # confirm_id_btn
+        content_update,  # id_content
     )
-
 
 
 def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
@@ -108,7 +108,7 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
         gr.update(),
         gr.update(),
         gr.update(visible=True),
-        gr.update(),                # ⬅️ analyze_btn (no change yet)
+        gr.update(),  # ⬅️ analyze_btn (no change yet)
     )
 
     if DEBUG_FAKE_WAIT_SECONDS and DEBUG_FAKE_WAIT_SECONDS > 0:
@@ -125,7 +125,7 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
         gr.update(interactive=True),
         gr.update(selected="analysis"),
         gr.update(visible=False),
-        gr.update(interactive=False),   # ⬅️ disable analyze_btn here
+        gr.update(interactive=False),  # ⬅️ disable analyze_btn here
     )
 
     # Step 3: no-op
@@ -214,13 +214,20 @@ def main():
         with gr.Tabs(elem_classes=["main-tabs"], visible=False) as tabs_wrapper:
             with gr.Tab("Configuració", id="config"):
                 # 1) Classification
-                gr.Markdown("### 1. Selecciona la pràctica", elem_classes=["section-title"])
+                gr.Markdown(
+                    "### 1. Selecciona la pràctica", elem_classes=["section-title"]
+                )
                 classification = gr.Dropdown(
                     choices=["Pràctica 1. Revista", "Pràctica 2. Xarxes Socials"],
                     label="📋 Classificació d'Imatges",
                     show_label=False,
                     value=None,
-                    elem_classes=["visible-dropdown", "with-info", "larger-font", "section-card"],
+                    elem_classes=[
+                        "visible-dropdown",
+                        "with-info",
+                        "larger-font",
+                        "section-card",
+                    ],
                 )
 
                 # 2) Upload
@@ -237,7 +244,10 @@ def main():
                         )
 
                 # 3) Tag each image
-                gr.Markdown("### 3. Assigna la categoria corresponent a cada imatge", elem_classes=["section-title"])
+                gr.Markdown(
+                    "### 3. Assigna la categoria corresponent a cada imatge",
+                    elem_classes=["section-title"],
+                )
                 with gr.Row(elem_classes=["section-card"]):
                     rows, thumbnail_images, type_dropdowns = [], [], []
                     for i in range(0, MAX_IMAGES, 2):
@@ -258,14 +268,21 @@ def main():
                                             show_label=False,
                                             elem_classes=["thumbnail-container"],
                                         )
-                                    with gr.Column(scale=1, min_width=180, elem_classes=["vcenter-col"]):
+                                    with gr.Column(
+                                        scale=1,
+                                        min_width=180,
+                                        elem_classes=["vcenter-col"],
+                                    ):
                                         dd_a = gr.Dropdown(
                                             choices=[],
                                             label=f"Tipus per a Imatge {i + 1}",
                                             value=None,
                                             visible=False,
                                             show_label=False,
-                                            elem_classes=["visible-dropdown", "medium-font"],
+                                            elem_classes=[
+                                                "visible-dropdown",
+                                                "medium-font",
+                                            ],
                                             allow_custom_value=True,
                                         )
                                 thumbnail_images.append(thumb_a)
@@ -285,14 +302,21 @@ def main():
                                             show_label=False,
                                             elem_classes=["thumbnail-container"],
                                         )
-                                    with gr.Column(scale=1, min_width=180, elem_classes=["vcenter-col"]):
+                                    with gr.Column(
+                                        scale=1,
+                                        min_width=180,
+                                        elem_classes=["vcenter-col"],
+                                    ):
                                         dd_b = gr.Dropdown(
                                             choices=[],
                                             label=f"Tipus per a Imatge {i + 2}",
                                             value=None,
                                             visible=False,
                                             show_label=False,
-                                            elem_classes=["visible-dropdown", "medium-font"],
+                                            elem_classes=[
+                                                "visible-dropdown",
+                                                "medium-font",
+                                            ],
                                             allow_custom_value=True,
                                         )
                                 thumbnail_images.append(thumb_b)
@@ -306,7 +330,12 @@ def main():
                     lines=3,
                     max_lines=5,
                     show_label=False,
-                    elem_classes=["emphasized-input", "with-info", "larger-font", "section-card"],
+                    elem_classes=[
+                        "emphasized-input",
+                        "with-info",
+                        "larger-font",
+                        "section-card",
+                    ],
                 )
 
                 with gr.Row(elem_classes=["analyze-bar"]):
@@ -319,13 +348,14 @@ def main():
                     )
 
                 # Results area
-                gr.Markdown("## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-title"])
+                gr.Markdown(
+                    "## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-title"]
+                )
                 llm_output = gr.Markdown(
                     value="Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…",
                     elem_classes=["analysis-section", "llm-output", "result-card"],
                 )
 
-            
             # ===== Tab: Anàlisi (chat) — rendered but disabled until analysis done =====
             with gr.Tab("Anàlisi", id="analysis", interactive=False) as analysis_tab:
                 with gr.Row(elem_classes=["analysis-split"]):
@@ -353,10 +383,10 @@ def main():
                     with gr.Column(scale=1, min_width=260):
                         analysis_gallery = gr.Gallery(
                             show_label=False,
-                            columns=[1],         # one vertical strip
+                            columns=[1],  # one vertical strip
                             rows=[3],
                             height="auto",
-                            preview=True,        # lightbox on click
+                            preview=True,  # lightbox on click
                             allow_preview=True,
                             elem_classes=["analysis-gallery"],
                         )
@@ -367,20 +397,35 @@ def main():
             fn=commit_id,
             inputs=[user_id_input],
             outputs=[
-                id_block, tabs_wrapper, composer, active_user_id, chat,
-                analysis_tab, user_id_input, confirm_id_btn, id_content,
+                id_block,
+                tabs_wrapper,
+                composer,
+                active_user_id,
+                chat,
+                analysis_tab,
+                user_id_input,
+                confirm_id_btn,
+                id_content,
             ],
         ).then(
             fn=restore_config_for_user,
             inputs=[active_user_id],
-            outputs=[classification, files, user_description, llm_output, *type_dropdowns, analysis_gallery],
+            outputs=[
+                classification,
+                files,
+                user_description,
+                llm_output,
+                *type_dropdowns,
+                analysis_gallery,
+            ],
         ).then(
             fn=update_type_dropdowns,
             inputs=[files, classification],
             outputs=rows + thumbnail_images + type_dropdowns,
         ).then(
             fn=update_button_and_status,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[analyze_btn],
         ).then(
             fn=disable_analyze_if_done,
@@ -388,25 +433,39 @@ def main():
             outputs=[analyze_btn],
         )
 
-
         user_id_input.submit(
             fn=commit_id,
             inputs=[user_id_input],
             outputs=[
-                id_block, tabs_wrapper, composer, active_user_id, chat,
-                analysis_tab, user_id_input, confirm_id_btn, id_content,
+                id_block,
+                tabs_wrapper,
+                composer,
+                active_user_id,
+                chat,
+                analysis_tab,
+                user_id_input,
+                confirm_id_btn,
+                id_content,
             ],
         ).then(
             fn=restore_config_for_user,
             inputs=[active_user_id],
-            outputs=[classification, files, user_description, llm_output, *type_dropdowns, analysis_gallery],
+            outputs=[
+                classification,
+                files,
+                user_description,
+                llm_output,
+                *type_dropdowns,
+                analysis_gallery,
+            ],
         ).then(
             fn=update_type_dropdowns,
             inputs=[files, classification],
             outputs=rows + thumbnail_images + type_dropdowns,
         ).then(
             fn=update_button_and_status,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[analyze_btn],
         ).then(
             fn=disable_analyze_if_done,
@@ -431,7 +490,8 @@ def main():
             outputs=all_outputs,
         ).then(
             fn=update_button_and_status,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[analyze_btn],
         )
 
@@ -442,7 +502,8 @@ def main():
             outputs=all_outputs,
         ).then(
             fn=update_button_and_status,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
             outputs=[analyze_btn],
         ).then(
             fn=_files_to_paths,
@@ -454,19 +515,28 @@ def main():
         for component in [files, classification, user_description] + type_dropdowns:
             component.change(
                 fn=update_button_and_status,
-                inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
+                inputs=[active_user_id, files, classification, user_description]
+                + type_dropdowns,
                 outputs=[analyze_btn],
             )
 
         # 4) Analyze click triggers LLM + updates chat + unlocks composer + enables & selects Anàlisi tab (3-step)
-        
         analyze_btn.click(
             fn=analyze_and_close,
-            inputs=[active_user_id, files, classification, user_description] + type_dropdowns,
-            outputs=[llm_output, chat, analysis_tab, composer, tabs_wrapper, wait_overlay, analyze_btn],
+            inputs=[active_user_id, files, classification, user_description]
+            + type_dropdowns,
+            outputs=[
+                llm_output,
+                chat,
+                analysis_tab,
+                composer,
+                tabs_wrapper,
+                wait_overlay,
+                analyze_btn,
+            ],
         )
 
-    demo.launch(debug=True)
+    demo.launch(debug=True, share=True)
 
 
 if __name__ == "__main__":

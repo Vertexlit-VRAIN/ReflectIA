@@ -32,6 +32,7 @@ def get_user_files_dir(user_id: str) -> str:
 
 # -------------------- Chat History --------------------
 
+
 def load_history(user_id: str) -> Optional[List[Dict[str, Any]]]:
     if not user_id:
         return None
@@ -55,6 +56,7 @@ def save_history(user_id: str, history: List[Dict[str, Any]]) -> None:
 
 
 # -------------------- Config / Analysis State --------------------
+
 
 def load_state(user_id: str) -> Optional[Dict[str, Any]]:
     if not user_id:
@@ -82,4 +84,3 @@ def save_state(user_id: str, state_obj: Dict[str, Any]) -> None:
     path = os.path.join(_user_dir(user_id), "state.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(state_obj, f, indent=2, ensure_ascii=False)
-

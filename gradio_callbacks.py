@@ -5,7 +5,15 @@ Callback functions for the Gradio interface.
 import gradio as gr
 
 from ai_providers import call_ai_model
-from config import AI_PROVIDER, DEBUG_LLM_OUTPUT, DEBUG_MODE, MAX_IMAGES, PROMPT_MAGAZINE, PROMPT_SOCIAL, PROMPT_CONVERSATION
+from config import (
+    AI_PROVIDER,
+    DEBUG_LLM_OUTPUT,
+    DEBUG_MODE,
+    MAX_IMAGES,
+    PROMPT_MAGAZINE,
+    PROMPT_SOCIAL,
+    PROMPT_CONVERSATION,
+)
 from image_utils import encode_image_to_base64
 
 import os, shutil
@@ -40,7 +48,6 @@ def history_to_gradio_messages(history):
     return msgs
 
 
-
 def generate_llm_response(
     user_id,
     files,
@@ -56,7 +63,9 @@ def generate_llm_response(
         return "❌ **Error**: Si us plau, pugeu almenys una imatge per a l'anàlisi."
 
     if not user_id:
-        return "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
+        return (
+            "❌ **Error**: Si us plau, introduïu el vostre identificador d'estudiant."
+        )
 
     if not classification:
         return "❌ **Error**: Si us plau, seleccioneu primer una classificació."
@@ -134,12 +143,18 @@ Analitza les imatges proporcionades seguint les directrius del prompt anterior.
         save_history(user_id, history)
 
     # --- Persist full state (identical for both modes) ---
-    save_state(user_id, {
-        "classification": classification,
-        "description": user_description,
-        "files": [{"path": persisted_paths[i], "type": types[i]} for i in range(len(persisted_paths))],
-        "analysis": result,
-    })
+    save_state(
+        user_id,
+        {
+            "classification": classification,
+            "description": user_description,
+            "files": [
+                {"path": persisted_paths[i], "type": types[i]}
+                for i in range(len(persisted_paths))
+            ],
+            "analysis": result,
+        },
+    )
 
     return result
 
@@ -200,6 +215,7 @@ def update_type_dropdowns(files, classification):
 
 # Removed auto_detect_image_type function - users must classify manually
 
+
 def update_button_and_status(
     user_id, files, classification, user_description, *type_selections
 ):
@@ -219,6 +235,7 @@ def update_button_and_status(
 
     ready = has_id and has_files and has_class and typed_ok and has_desc
     return gr.update(interactive=ready)
+
 
 def format_analysis_results(result, classification, files, image_info):
     return result
@@ -300,6 +317,7 @@ def handle_conversation_message(message, history, user_id):
 
     return history_to_gradio_messages(history), gr.update(value=None, interactive=True)
 
+
 def ensure_conversation_intro(user_id):
     """
     Ensure both the system conversational prompt and the tutor's greeting
@@ -313,7 +331,9 @@ def ensure_conversation_intro(user_id):
             with open(PROMPT_CONVERSATION, "r", encoding="utf-8") as f:
                 conversation_prompt = f.read()
         except FileNotFoundError:
-            conversation_prompt = "Ets un tutor de disseny que dona feedback als estudiants."
+            conversation_prompt = (
+                "Ets un tutor de disseny que dona feedback als estudiants."
+            )
 
         # Inject hidden system prompt for the model
         system_prompt = {
@@ -338,6 +358,7 @@ def ensure_conversation_intro(user_id):
 
     return history_to_gradio_messages(history)
 
+
 def restore_config_for_user(user_id, max_images=MAX_IMAGES):
     """
     Loads states/<id>.json and returns:
@@ -355,7 +376,10 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
     }
     classification_val = state.get("classification")
     description_val = state.get("description") or ""
-    analysis_val = state.get("analysis") or "Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…"
+    analysis_val = (
+        state.get("analysis")
+        or "Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…"
+    )
     file_paths = [f.get("path") for f in (state.get("files") or []) if f.get("path")]
     types = [f.get("type") for f in (state.get("files") or [])]
 
@@ -365,7 +389,15 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
         v = types[i] if i < len(types) else None
         dd_values.append(gr.update(value=v))
 
-    return (classification_val, file_paths, description_val, analysis_val, *dd_values, file_paths)
+    return (
+        classification_val,
+        file_paths,
+        description_val,
+        analysis_val,
+        *dd_values,
+        file_paths,
+    )
+
 
 def disable_analyze_if_done(user_id):
     """

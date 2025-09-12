@@ -16,6 +16,7 @@ from config import (
     TIMEOUT_SECONDS,
 )
 
+
 def clean_history_for_api(history):
     """Remove custom keys (like 'visible') from history before sending to the API."""
     if not history:
@@ -23,9 +24,10 @@ def clean_history_for_api(history):
     cleaned_history = []
     for message in history:
         # Create a new dict without the 'visible' key
-        cleaned_message = {k: v for k, v in message.items() if k != 'visible'}
+        cleaned_message = {k: v for k, v in message.items() if k != "visible"}
         cleaned_history.append(cleaned_message)
     return cleaned_history
+
 
 def call_ai_model(provider, prompt, images_base64=None, history=None):
     """Call the specified AI model provider."""
@@ -35,6 +37,7 @@ def call_ai_model(provider, prompt, images_base64=None, history=None):
         return call_gemini_model(prompt, images_base64, history)
     else:
         return f"❌ **Error**: Proveïdor d'IA no reconegut: {provider}"
+
 
 def call_gemini_model(prompt, images_base64=None, history=None):
     """Call the Gemini API.
@@ -76,6 +79,7 @@ def call_gemini_model(prompt, images_base64=None, history=None):
 
     except Exception as e:
         return f"❌ **Error Inesperat amb Gemini**: {e}"
+
 
 def call_ollama_model(prompt, images_base64=None):
     """Call local Ollama model"""
