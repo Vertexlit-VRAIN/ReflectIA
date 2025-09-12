@@ -30,6 +30,8 @@ This is an **internal evaluation** (NOT visible to students). The analysis must 
 
 ### Criteria for Analysis  
 
+Evaluate composition and layout, considering hierarchy, balance, grid use, and Gestalt principles (proximity, similarity, figure/ground, closure, continuity) to ensure visual clarity and flow.
+
 1. **Consistency**  
    - Coherence between cover and interior pages.  
    - Consistency in use of typography, colors, margins, and styles.  

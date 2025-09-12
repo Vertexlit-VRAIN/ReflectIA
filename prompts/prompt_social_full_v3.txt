@@ -32,55 +32,121 @@ This is an **internal evaluation** (NOT visible to students). The analysis must 
 
 ### Criteria for Analysis  
 
-1. **Consistency**  
-   - Coherence across all platforms (Instagram, X, newsletter).  
-   - Visual identity applied uniformly (colors, typography, styles).  
-   - Contest posts differentiated but still part of the same system.  
+Evaluate composition and layout across posts, headers, and newsletter, considering hierarchy, balance, alignment, rhythm, proximity, repetition, contrast, and Gestalt principles (similarity, closure, figure/ground, continuity). Assess whether the application of these design principles ensures clarity, guides user attention effectively, and creates flow across all campaign pieces.
 
-2. **Composition & Layout**  
-   - Balance, margins, and white space in posts and newsletter.  
-   - Clear hierarchy of information (artists, festival name, dates, tickets).  
-   - Variation across templates to avoid monotony.  
+1. Consistency
+- Cross-platform coherence: Instagram, X/Twitter, newsletter, headers, profile icons, carousels, stories all feel like one system.
+- Identity system: fixed palette, defined type families, repeatable graphic language (icon/style/filters), consistent tone of voice.
+- Variant pieces (e.g., contest posts) are visually distinct but still read as part of the same system.
+- Feed-level consistency (IG grid): tiles form a recognizable theme when viewed together (color/typography/filter rhythm).
 
-3. **Moodboard**  
-   - Captures a clear aesthetic direction.  
-   - Demonstrates relevance to the festival identity and values.  
-   - Shows continuity in the final pieces.  
+2. Composition & layout
+- Balance and order: no overcrowding; negative space is intentional and supports reading flow.
+- Hierarchy: priority order is unambiguous (festival name → dates/location → lineup/CTA → secondary info/sponsors).
+- Alignment & margins: consistent paddings and alignments across all assets.
+- Grid logic: layouts clearly snap to a column/modular grid; grouping is legible.
+- Gestalt: apply proximity/similarity for grouping; figure/ground for clarity; closure/continuity for visual flow across panels/carousels.
+- Variation with control: templates vary (not repetitive) without breaking system identity.
 
-4. **Logotype**  
-   - Clear, scalable, functional at small sizes.  
-   - Aesthetically aligned with the festival identity.  
-   - Works across different backgrounds and media.  
+3. Moodboard
+- Aesthetic direction: clear visual universe (palette, textures, image style, typographic mood).
+- Relevance: matches music genres, audience, city/venue ethos.
+- Traceability: final pieces demonstrably derive from the moodboard (no unexplained departures).
 
-5. **Grid System**  
-   - Correct grid application in newsletter and posts.  
-   - Alignment and structure respected.  
-   - Grid enhances clarity and order.  
+4. Logotype
+- Scalability: legible at small sizes (profile icons, favicon); crisp in vector.
+- Versatility: works on light/dark/photo backgrounds; provides mono/flat variants if needed.
+- Identity fit: style and energy align with the festival proposition.
+- System usage: consistent placement, clear safe area, predictable lockups with descriptors or dates when required.
 
-6. **Typography**  
-   - Appropriate font choice(s), limited and consistent.  
-   - Readability across sizes and formats (especially mobile).  
-   - Clear hierarchy (titles, subtitles, body, captions).  
+5. Grid system
+- Use: explicit grids in newsletter and posts (columns/modules/baseline).
+- Alignment: text blocks, CTAs, captions, and images adhere to grid; no floating misalignments.
+- Role: grid increases clarity, rhythm, and scanability; enables variations while maintaining order.
 
-7. **Colors**  
-   - Palette coherent with theme and festival identity.  
-   - Proper contrast ensuring readability.  
-   - Harmony across posts, header, newsletter.  
+6. Typography
+- Families: limited to 2–3 max with defined roles (display/headline, subhead, body/captions).
+- Readability: tested on mobile; avoid ultra-light/condensed at small sizes.
+- Size guidance by surface:
+  • Instagram posts (static): minimum ~36 px for core text to survive phone density.
+  • Email/newsletter: headings ~22–28 px; body ~14–16 px (or 12–16 pt) with adequate line-height.
+  • Stories: adjust sizes to remain readable within 9:16 frame; avoid edge crowding.
+- Hierarchy treatments: weight/size/spacing communicate levels consistently across all pieces.
+- Restraint: avoid decorative fonts for body; keep emphasis tools (bold/italic/case) purposeful.
 
-8. **Detail & Realism**  
-   - Newsletter and posts resemble real digital pieces.  
-   - Images high-quality and correctly integrated.  
-   - Mockups look credible and professional.  
+7. Colors
+- Palette: coherent with identity; primary/secondary/neutral roles defined.
+- Contrast & accessibility:
+  • Normal text ≥ 4.5:1.
+  • Large text & links ≥ 3:1.
+  • Aim higher/AAA for critical UI when feasible.
+- Use: color drives focus (CTA, key facts) without harming legibility; avoid low-contrast overlays on photos.
+- Continuity: same palette logic across IG/X/newsletter; no random hues.
 
-9. **Adequacy to the Brief**  
-   - Meets all requirements (logo, profiles, artist templates, contest post, header, newsletter).  
-   - Respect for festival’s values and positioning.  
-   - Inclusion of explanations in presentation.  
+8. Detail & realism
+- Craft: crisp assets, correct exports (no pixelation), consistent corner radii/shadows/strokes.
+- Photo/illustration: high-quality sources; no compression artifacts; consistent treatment/filters.
+- Integration: image–type relationships feel intentional; captions/credits placed with discipline.
+- Mockups: credible devices/contexts; scale and perspective are believable.
 
-10. **Presentation & Justification**  
-    - Behance presentation clear, structured, professional.  
-    - Decisions justified with clarity.  
-    - No orthographic or grammatical errors.  
+9. Adequacy to the brief
+- Completeness: logo (full + isotip), profiles, artist templates (≥3 artists), contest post, X header, newsletter (600 px width), moodboard, grid overlays, and mockups.
+- Positioning: reflects festival type, genres, audience; communicates dates/location/tickets clearly.
+- Rationale: Behance case explains choices (logo, palette, type, grid, layout decisions).
+
+10. Presentation & justification
+- Structure: professional narrative (Context → Moodboard → Identity → System → Pieces → Mockups).
+- Clarity: concise copy; clean slides; no grammar/spelling issues.
+- Evidence: show grids/contrast checks/scale tests; before–after or A/B where relevant.
+
+11. Accessibility & compliance
+- Contrast: normal text ≥4.5:1; large text & links ≥3:1; strive for AAA when possible; verify with a contrast checker.
+- Semantics: newsletter images include ALT text; avoid color-only distinctions for meaning.
+- Buttons & hit targets: CTA minimum ~44×44 px for mobile usability.
+- Awareness: follow accessibility guidance (WCAG principles) beyond contrast (structure, captions where applicable).
+
+12. Cta & conversion logic
+- Focus: prefer a single, primary CTA per email/newsletter block (multiple CTAs dilute conversion).
+- Copy: specific, benefit-oriented text (avoid generic “Subscribe”/“Try it”); tailor to offer.
+- Placement: visible above the fold; strong contrast against background; consider supporting proof (ratings, micro-testimonials) near CTA.
+
+13. Newsletter structure & deliverability
+- Standard width: ~600 px; responsive behavior validated on mobile and desktop.
+- Sections:
+  • Header: logo + clear headline; optional nav.
+  • Body: scannable blocks; supportive images/GIFs; consistent formatting.
+  • Footer: legal info, contact, social links, unsubscribe (mandatory).
+- Content ratio: target ~60:40 text:image to avoid heavy loads/spam triggers.
+- Media policy: avoid embedding video in-mail; link with a static image/GIF poster.
+- Pre-send QA: device previews, link checks, correct dates/prices; avoid spam-trigger patterns; consider A/B testing (subject, CTA, layout).
+
+14. Platform formats & adaptation
+- Instagram:
+  • Posts: 1:1 (1080×1080) or 5:6 portrait recommended.
+  • Stories/Reels: 9:16 (1080×1920) optimal; min 600×1067; photo ≤30 MB; video ≤4 GB.
+  • Feed consistency: plan tiles as a 3-column grid; maintain theme coherence.
+- X/Twitter:
+  • Profile: 400×400; Header: 1500×500; pick theme color; profile/cover should complement each other.
+- Newsletter:
+  • Width 600 px; headings 22–28 px; body 14–16 px; CTA ≥44×44 px; mobile-first checks.
+- General: respect platform crop behaviors; protect safe areas around critical text/CTAs.
+
+15. Image & iconography practices
+- Formats: use web-friendly images (.jpg/.png/.gif) with optimization (quality vs. weight).
+- Alt text: present for critical newsletter images.
+- Style coherence: photography/illustration/icon sets share a consistent visual language; avoid off-brand stock.
+- Balance: don’t overload with imagery; keep breathable layouts.
+
+16. Engagement, visual cues & goals
+- Goal-first design: each piece declares a clear objective (engagement, clicks, shares, sign-ups) and optimizes layout/copy accordingly.
+- Visual cues: arrows, bullets/emojis, micro-annotations that direct attention to key info/CTA.
+- Story mechanics: leverage interactive elements (stickers, polls) appropriately; maintain brand tone.
+- Template system: build reusable templates to speed production while preserving identity; ensure flexibility for special content.
+
+17. Layout patterns for email/newsletter (when applicable)
+- Z- or F-pattern reading for scanability (choose by content type).
+- Grid-based or hybrid layouts to organize mixed content; minimalist or visual-first layouts when emphasis/impact is required.
+- Select pattern per message goal; avoid patterns that confuse or bury CTAs.
 
 ---
 
