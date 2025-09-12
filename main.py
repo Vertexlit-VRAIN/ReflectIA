@@ -364,7 +364,7 @@ def main():
                         chat = gr.Chatbot(
                             type="messages",
                             show_label=False,
-                            height=640,
+                            height="80vh",
                             elem_classes=["chatbot-surface"],
                         )
                         composer = gr.Textbox(
@@ -385,7 +385,7 @@ def main():
                             show_label=False,
                             columns=[1],  # one vertical strip
                             rows=[3],
-                            height="auto",
+                            height="80vh",
                             preview=True,  # lightbox on click
                             allow_preview=True,
                             elem_classes=["analysis-gallery"],
