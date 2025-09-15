@@ -21,7 +21,7 @@ GEMINI_MODEL = "gemini-2.5-flash-lite"
 # --- Prompts ---
 PROMPT_MAGAZINE = "prompts/prompt_magazine_full_v3.txt"
 PROMPT_SOCIAL = "prompts/prompt_social_full_v3.txt"
-PROMPT_CONVERSATION = "prompts/prompt_conversation_v3.txt"
+PROMPT_CONVERSATION = "prompts/prompt_conversation_v5.txt"
 
 
 # --- UI Configuration ---
