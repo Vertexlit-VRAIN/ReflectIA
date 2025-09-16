@@ -7,6 +7,7 @@ classifications (e.g., Editorial, Social Network).
 
 import gradio as gr
 import time
+import os
 
 from config import MAX_IMAGES, DEBUG_FAKE_WAIT_SECONDS
 from gradio_callbacks import (
@@ -52,6 +53,19 @@ def _files_to_paths(files):
         p = getattr(f, "name", None) or str(f)
         out.append(p)
     return out
+
+
+def _handle_gallery_select(evt: gr.SelectData, files):
+    """Handle gallery selection to show filename."""
+    if not files or evt.index >= len(files):
+        return gr.update(value="", visible=False)
+
+    # Get the selected file path
+    selected_file = files[evt.index]
+    file_path = getattr(selected_file, "name", None) or str(selected_file)
+    filename = os.path.basename(file_path)
+
+    return gr.update(value=f"**{filename}**", visible=True)
 
 
 def commit_id(uid_text):
@@ -390,6 +404,12 @@ def main():
                             allow_preview=True,
                             elem_classes=["analysis-gallery"],
                         )
+                        # Display filename for currently selected image
+                        current_filename = gr.Markdown(
+                            value="",
+                            elem_classes=["filename-display"],
+                            visible=False
+                        )
 
         # ---------- Event wiring ----------
 
@@ -417,6 +437,7 @@ def main():
                 llm_output,
                 *type_dropdowns,
                 analysis_gallery,
+                current_filename,
             ],
         ).then(
             fn=update_type_dropdowns,
@@ -457,6 +478,7 @@ def main():
                 llm_output,
                 *type_dropdowns,
                 analysis_gallery,
+                current_filename,
             ],
         ).then(
             fn=update_type_dropdowns,
@@ -509,6 +531,9 @@ def main():
             fn=_files_to_paths,
             inputs=[files],
             outputs=[analysis_gallery],
+        ).then(
+            fn=lambda: gr.update(value="", visible=False),
+            outputs=[current_filename],
         )
 
         # 3) Any field change should recompute status
@@ -519,6 +544,13 @@ def main():
                 + type_dropdowns,
                 outputs=[analyze_btn],
             )
+
+        # Gallery selection handler to show filename
+        analysis_gallery.select(
+            fn=_handle_gallery_select,
+            inputs=[files],
+            outputs=[current_filename],
+        )
 
         # 4) Analyze click triggers LLM + updates chat + unlocks composer + enables & selects Anàlisi tab (3-step)
         analyze_btn.click(

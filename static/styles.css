@@ -517,6 +517,20 @@ div[data-testid*="chatbot"] *, div[data-testid*="chatbot"],
   .wait-bar::before{ animation: none !important; }
 }
 
+/* Filename display for gallery */
+.filename-display{
+  text-align: center !important;
+  padding: 8px 12px !important;
+  margin: 8px 0 0 0 !important;
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  font-size: 0.95rem !important;
+  color: var(--ink-2) !important;
+  font-family: monospace !important;
+  word-break: break-all !important;
+}
+
 /* iOS safe areas */
 @supports(padding:max(0px)){
   body{ padding-left: max(0px, env(safe-area-inset-left)); padding-right: max(0px, env(safe-area-inset-right)); }

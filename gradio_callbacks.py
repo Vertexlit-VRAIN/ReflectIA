@@ -396,6 +396,7 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
         analysis_val,
         *dd_values,
         file_paths,
+        gr.update(value="", visible=False),  # current_filename
     )
 
 
