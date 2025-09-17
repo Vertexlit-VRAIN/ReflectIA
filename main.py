@@ -192,7 +192,7 @@ def main():
               <div class="wait-card">
                 <div class="wait-title">Analitzant…</div>
                 <div class="wait-bar"><span class="bar"></span></div>
-                <div class="wait-tip">Agafa aire... que això va per llarg (uns segons!)</div>
+                <div class="wait-tip">Això pot trigar uns segons</div>
               </div>
             </div>
             """,

@@ -182,7 +182,7 @@ def update_type_dropdowns(files, classification):
             "X Artista",
             "X Concurs",
             "Logotip",
-            "Capçelera",
+            "Capçalera",
         ]
     else:
         type_options = ["—"]
