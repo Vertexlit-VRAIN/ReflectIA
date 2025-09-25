@@ -391,6 +391,12 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
         v = types[i] if i < len(types) else None
         dd_values.append(gr.update(value=v))
 
+    if file_paths:
+        first_filename = os.path.basename(file_paths[0])
+        filename_update = gr.update(value=f"**{first_filename}**", visible=True)
+    else:
+        filename_update = gr.update(value="", visible=False)
+
     return (
         classification_val,
         file_paths,
@@ -398,7 +404,7 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
         analysis_val,
         *dd_values,
         file_paths,
-        gr.update(value="", visible=False),  # current_filename
+        filename_update,  # current_filename
     )
 
 

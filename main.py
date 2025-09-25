@@ -568,7 +568,8 @@ def main():
             ],
         )
 
-    demo.launch(debug=True, share=True)
+    # demo.launch(debug=True, share=True)
+    demo.launch(debug=True)
 
 
 if __name__ == "__main__":

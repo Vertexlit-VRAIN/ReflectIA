@@ -269,6 +269,17 @@ button[variant="primary"]:hover,
   background:#1a1533 !important; border:1px solid #2c2359 !important;
 }
 
+/* Increase chat font size for better readability */
+.gr-chatbot .message p,
+.chatbot-surface .message p,
+.gr-chatbot .message ul,
+.chatbot-surface .message ul,
+.gr-chatbot .message li,
+.chatbot-surface .message li {
+  font-size: 1.2rem !important;
+  line-height: 1.6 !important;
+}
+
 /* Disable copying in chat */
 .chatbot-surface, .chatbot-surface *, .gr-chatbot, .gr-chatbot *,
 .gr-chatbot .message, .gr-chatbot .message *,
