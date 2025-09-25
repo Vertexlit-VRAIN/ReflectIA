@@ -84,3 +84,18 @@ def save_state(user_id: str, state_obj: Dict[str, Any]) -> None:
     path = os.path.join(_user_dir(user_id), "state.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(state_obj, f, indent=2, ensure_ascii=False)
+
+
+# -------------------- Convenience lookups --------------------
+def get_last_message_with_flag(user_id: str, flag: str) -> Optional[Dict[str, Any]]:
+    hist = load_history(user_id) or []
+    for m in reversed(hist):
+        if m.get(flag):
+            return m
+    return None
+
+
+def extract_text_from_parts(message: Dict[str, Any]) -> str:
+    parts = message.get("parts") or []
+    texts = [p for p in parts if isinstance(p, str)]
+    return "\n\n".join(texts).strip() if texts else ""

@@ -16,15 +16,15 @@ from config import (
     TIMEOUT_SECONDS,
 )
 
-
 def clean_history_for_api(history):
-    """Remove custom keys (like 'visible') from history before sending to the API."""
+    """Remove custom keys (like 'visible', 'analysis', 'conversation', 'system')
+    from history before sending to the API."""
     if not history:
         return []
     cleaned_history = []
     for message in history:
-        # Create a new dict without the 'visible' key
-        cleaned_message = {k: v for k, v in message.items() if k != "visible"}
+        _strip_keys = {"visible", "analysis", "conversation", "system"}
+        cleaned_message = {k: v for k, v in message.items() if k not in _strip_keys}
         cleaned_history.append(cleaned_message)
     return cleaned_history
 

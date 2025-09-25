@@ -3,6 +3,7 @@ Callback functions for the Gradio interface.
 """
 
 import gradio as gr
+import os, shutil
 
 from ai_providers import call_ai_model
 from config import (
@@ -16,7 +17,6 @@ from config import (
 )
 from image_utils import encode_image_to_base64
 
-import os, shutil
 from history_manager import (
     load_history,
     save_history,
@@ -24,6 +24,8 @@ from history_manager import (
     save_state,
     get_user_files_dir,
 )
+# New helper imports to support tag-aware restore
+from history_manager import get_last_message_with_flag, extract_text_from_parts
 
 
 def history_to_gradio_messages(history):
@@ -137,9 +139,19 @@ Analitza les imatges proporcionades seguint les directrius del prompt anterior.
         history = load_history(user_id) or []
         result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
 
-        # Append invisible history
-        history.append({"role": "user", "parts": [prompt], "visible": False})
-        history.append({"role": "model", "parts": [result], "visible": False})
+        # Append invisible history (tagged as analysis)
+        history.append({
+            "role": "user",
+            "parts": [prompt],
+            "visible": False,
+            "analysis": True
+        })
+        history.append({
+            "role": "model",
+            "parts": [result],
+            "visible": False,
+            "analysis": True
+        })
         save_history(user_id, history)
 
     # --- Persist full state (identical for both modes) ---
@@ -264,13 +276,14 @@ def handle_conversation_message(message, history, user_id):
     is_first_conversation = not any(m.get("visible", False) for m in history)
     if is_first_conversation:
         system_prompt = [
-            {"role": "user", "parts": [conversation_prompt], "visible": False},
+            {"role": "user", "parts": [conversation_prompt], "visible": False, "system": True},
             {
                 "role": "model",
                 "parts": [
                     "Hola! A partir de l'anàlisi inicial, podem conversar sobre el teu treball. Fes-me qualsevol pregunta o demana'm suggeriments."
                 ],
                 "visible": True,
+                "conversation": True,
             },
         ]
         history.extend(system_prompt)
@@ -301,7 +314,12 @@ def handle_conversation_message(message, history, user_id):
     if not user_parts:
         return history_to_gradio_messages(history), gr.update(value=None)
 
-    history.append({"role": "user", "parts": user_parts, "visible": True})
+    history.append({
+        "role": "user",
+        "parts": user_parts,
+        "visible": True,
+        "conversation": True
+    })
 
     if DEBUG_MODE:
         response = (
@@ -314,7 +332,12 @@ def handle_conversation_message(message, history, user_id):
             AI_PROVIDER, "", images_base64=images_base64, history=history
         )
 
-    history.append({"role": "model", "parts": [response], "visible": True})
+    history.append({
+        "role": "model",
+        "parts": [response],
+        "visible": True,
+        "conversation": True
+    })
     save_history(user_id, history)
 
     return history_to_gradio_messages(history), gr.update(value=None, interactive=True)
@@ -342,6 +365,7 @@ def ensure_conversation_intro(user_id):
             "role": "user",
             "parts": [conversation_prompt],
             "visible": False,
+            "system": True,
         }
         history.append(system_prompt)
 
@@ -353,6 +377,7 @@ def ensure_conversation_intro(user_id):
                 "Fes-me qualsevol pregunta o demana'm suggeriments."
             ],
             "visible": True,
+            "conversation": True,
         }
         history.append(greeting)
 
@@ -378,10 +403,16 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
     }
     classification_val = state.get("classification")
     description_val = state.get("description") or ""
+
+    # Prefer the last 'analysis' message from history; fallback to state.json
+    last_analysis_msg = get_last_message_with_flag(user_id, "analysis")
+    last_analysis_text = extract_text_from_parts(last_analysis_msg) if last_analysis_msg else ""
     analysis_val = (
-        state.get("analysis")
+        last_analysis_text
+        or state.get("analysis")
         or "Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…"
     )
+
     file_paths = [f.get("path") for f in (state.get("files") or []) if f.get("path")]
     types = [f.get("type") for f in (state.get("files") or [])]
 
