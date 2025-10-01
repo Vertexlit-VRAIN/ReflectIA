@@ -57,7 +57,9 @@ def call_gemini_model(prompt, images_base64=None, history=None):
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel(GEMINI_MODEL)
+        model = genai.GenerativeModel(GEMINI_MODEL, generation_config={
+                "temperature": 0.0,
+        },)
 
         # Remove custom keys from history before sending to the API
         api_history = clean_history_for_api(history)
