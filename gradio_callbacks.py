@@ -112,16 +112,17 @@ def generate_llm_response(
 
     context = f"Classificació: {classification}"
     if user_description and user_description.strip():
-        context += f"\nDescripció de l'usuari: {user_description.strip()}"
-    context += f"\nImatges a analitzar: {', '.join(os.path.basename(p) + ' - ' + str(types[i]) for i, p in enumerate(persisted_paths))}"
+        context += f"\nUser description: {user_description.strip()}"
+    context += f"\nImatges to analyze: {', '.join(os.path.basename(p) + ' - ' + str(types[i]) for i, p in enumerate(persisted_paths))}"
 
     prompt = f"""{base_prompt}
 
 ---
-### CONTEXT ADICIONAL DE L'ALUMNE:
+### ADDITIONAL CONTEXT OF THE STUDENT:
+
 {context}
 
-Analitza les imatges proporcionades seguint les directrius del prompt anterior.
+Analyze the provided images in order, following the guidelines from the previous prompt.
 """
 
     # --- Main difference: AI call vs. placeholder ---
@@ -135,6 +136,29 @@ Analitza les imatges proporcionades seguint les directrius del prompt anterior.
             if isinstance(b64, dict) and "error" in b64:
                 return b64["error"]
             images_base64.append(b64)
+
+        # #############################################################
+        # ### START DEBUG CODE ###
+        # This will print the exact data being sent to the AI to your console.
+        # #############################################################
+        print("\n" + "="*80)
+        print("DEBUG: DATA BEING SENT TO THE AI MODEL")
+        print("="*80)
+        
+        print("\n--- [ IMAGE ORDER & DETAILS ] ---")
+        if not persisted_paths:
+            print("No images were found to send.")
+        else:
+            for i, (path, image_type) in enumerate(zip(persisted_paths, types)):
+                print(f"  Image {i+1}: Type = '{image_type}', Path = '{path}'")
+        
+        print("\n--- [ FULL PROMPT TEXT ] ---")
+        print(prompt)
+        print("--- [ END OF PROMPT ] ---")
+        print("="*80 + "\n")
+        # #############################################################
+        # ### END DEBUG CODE ###
+        # #############################################################
 
         history = load_history(user_id) or []
         result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
@@ -170,7 +194,6 @@ Analitza les imatges proporcionades seguint les directrius del prompt anterior.
 
     return result
 
-
 def update_type_dropdowns(files, classification):
     if files:
         files = [f for f in files if f is not None]
@@ -195,7 +218,6 @@ def update_type_dropdowns(files, classification):
             "X Concurs",
             "Logotip",
             "Capçalera",
-            "Imatge de Perfil"
         ]
     else:
         type_options = ["—"]

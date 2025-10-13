@@ -17,11 +17,12 @@ TIMEOUT_SECONDS = 600
 # --- Gemini Configuration ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash-lite"
+# GEMINI_MODEL = "gemini-2.5-flash"
 
 # --- Prompts ---
-PROMPT_MAGAZINE = "prompts/prompt_magazine_full_v4.txt"
-PROMPT_SOCIAL = "prompts/prompt_social_full_v4.txt"
-PROMPT_CONVERSATION = "prompts/prompt_conversation_v6.txt"
+PROMPT_MAGAZINE = "prompts/prompt_magazine_full_v5.txt"
+PROMPT_SOCIAL = "prompts/prompt_social_full_v7.txt"
+PROMPT_CONVERSATION = "prompts/prompt_conversation_v5.4.txt"
 
 
 # --- UI Configuration ---
