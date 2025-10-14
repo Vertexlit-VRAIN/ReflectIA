@@ -96,7 +96,7 @@ def generate_llm_response(
                 dst = src
         persisted_paths.append(dst)
 
-    # --- Prepare prompt (shared) ---
+    # === STEP 0: LOAD AND PARSE PROMPT ===
     if classification == "Pràctica 1. Revista":
         prompt_file = PROMPT_MAGAZINE
     elif classification == "Pràctica 2. Xarxes Socials":
@@ -106,67 +106,118 @@ def generate_llm_response(
 
     try:
         with open(prompt_file, "r", encoding="utf-8") as f:
-            base_prompt = f.read()
+            full_prompt_content = f.read()
     except FileNotFoundError:
         return f"❌ **Error**: No s'ha trobat el fitxer de prompt: {prompt_file}"
 
-    context = f"Classificació: {classification}"
-    if user_description and user_description.strip():
-        context += f"\nUser description: {user_description.strip()}"
-    context += f"\nImatges to analyze: {', '.join(os.path.basename(p) + ' - ' + str(types[i]) for i, p in enumerate(persisted_paths))}"
+    separator = "### Whole-Project (Conjunto) Analysis"
+    if separator not in full_prompt_content:
+        return f"❌ **Error**: El fitxer de prompt '{prompt_file}' no conté el separador necessari: '{separator}'."
 
-    prompt = f"""{base_prompt}
-
----
-### ADDITIONAL CONTEXT OF THE STUDENT:
-
-{context}
-
-Analyze the provided images in order, following the guidelines from the previous prompt.
-"""
+    prompt_parts = full_prompt_content.split(separator, 1)
+    image_analysis_prompt_base = prompt_parts[0]
+    global_analysis_prompt_base = separator + prompt_parts[1]
 
     # --- Main difference: AI call vs. placeholder ---
     if DEBUG_MODE:
         result = DEBUG_LLM_OUTPUT
     else:
-        # Encode for model
-        images_base64 = []
-        for p in persisted_paths:
-            b64 = encode_image_to_base64(p)
-            if isinstance(b64, dict) and "error" in b64:
-                return b64["error"]
-            images_base64.append(b64)
+        all_individual_results_raw = [] # CHANGE: Store raw results first
+        num_images = len(persisted_paths)
+        progress(0, desc="Iniciant anàlisi...")
 
-        # #############################################################
-        # ### START DEBUG CODE ###
-        # This will print the exact data being sent to the AI to your console.
-        # #############################################################
-        print("\n" + "="*80)
-        print("DEBUG: DATA BEING SENT TO THE AI MODEL")
-        print("="*80)
-        
-        print("\n--- [ IMAGE ORDER & DETAILS ] ---")
-        if not persisted_paths:
-            print("No images were found to send.")
-        else:
-            for i, (path, image_type) in enumerate(zip(persisted_paths, types)):
-                print(f"  Image {i+1}: Type = '{image_type}', Path = '{path}'")
-        
-        print("\n--- [ FULL PROMPT TEXT ] ---")
-        print(prompt)
-        print("--- [ END OF PROMPT ] ---")
-        print("="*80 + "\n")
-        # #############################################################
-        # ### END DEBUG CODE ###
-        # #############################################################
+        # === STEP 1: INDIVIDUAL IMAGE ANALYSIS ===
+        # This loop completes entirely before proceeding to the next step.
+        for i, path in enumerate(persisted_paths):
+            filename = os.path.basename(path)
+            image_type = types[i]
+            
+            progress((i) / (num_images + 1), desc=f"Analitzant imatge {i + 1}/{num_images}: {filename}")
 
+            image_b64 = encode_image_to_base64(path)
+            if isinstance(image_b64, dict) and "error" in image_b64:
+                return image_b64["error"]
+            
+            image_context = (
+                f"Student's overall description: {user_description.strip()}\n"
+                f"Now, focus EXCLUSIVELY on the following image:\n"
+                f"- Filename: {filename}\n"
+                f"- Assigned type: {image_type}"
+            )
+
+            prompt_for_this_image = f"""{image_analysis_prompt_base}
+
+---
+### IMAGE TO ANALYZE
+
+{image_context}
+
+Provide your detailed analysis for THIS SPECIFIC IMAGE, following the guidelines from the 'Procedure for Image-by-Image Analysis' section. Start your response directly with the analysis.
+"""
+            single_result = call_ai_model(
+                AI_PROVIDER, 
+                prompt_for_this_image, 
+                images_base64=[image_b64], 
+                history=None
+            )
+            if "❌ **Error" in single_result:
+                return f"Error analyzing '{filename}': {single_result}"
+
+            # CHANGE: Append only the raw AI response, not the pre-formatted string.
+            all_individual_results_raw.append(single_result)
+
+        # === STEP 2: GLOBAL CONSISTENCY ANALYSIS ===
+        # This step only runs AFTER the loop above is 100% complete.
+        progress(num_images / (num_images + 1), desc="Generant anàlisi global...")
+        
+        # CHANGE: Use the raw results to build the context. This ensures all images are included.
+        combined_individual_analyses_text = "\n\n---\n\n".join(all_individual_results_raw)
+        
+        global_analysis_prompt = f"""{global_analysis_prompt_base}
+
+---
+### CONTEXT: YOUR PREVIOUSLY GENERATED ANALYSES
+
+You have already analyzed the individual pieces. Here are your complete findings for each one:
+
+{combined_individual_analyses_text}
+
+---
+Now, using the instructions from the first part of this prompt (Whole-Project Analysis) and the context of your individual analyses above, provide the final "Whole-Project Analysis (Conjunto)".
+"""
+
+        global_result = call_ai_model(
+            AI_PROVIDER,
+            global_analysis_prompt,
+            images_base64=None, # No images needed for this call
+            history=None
+        )
+
+        if "❌ **Error" in global_result:
+            return f"Error generating global analysis: {global_result}"
+
+        # === STEP 3: ASSEMBLE FINAL REPORT IN THE CORRECT ORDER ===
+        # This is the corrected, robust assembly process.
+        progress(1.0, desc="Anàlisi completada!")
+        
+        # 1. Build the individual analysis section from the raw data, ensuring correct order.
+        final_report_body = "## 🤖 Anàlisi Imatge per Imatge\n\n"
+        for i, raw_result in enumerate(all_individual_results_raw):
+            filename = os.path.basename(persisted_paths[i])
+            image_type = types[i]
+            final_report_body += f"### Anàlisi de '{filename}' ({image_type})\n\n{raw_result}\n\n---\n\n"
+        
+        # 2. Append the global analysis section at the very end.
+        final_report_global = f"## 🌍 Anàlisi Global del Projecte (Conjunto)\n\n{global_result}"
+        
+        # 3. Combine them into the final result.
+        result = f"{final_report_body.strip()}\n\n{final_report_global}"
+
+        # --- History Management ---
         history = load_history(user_id) or []
-        result = call_ai_model(AI_PROVIDER, prompt, images_base64, history)
-
-        # Append invisible history (tagged as analysis)
         history.append({
             "role": "user",
-            "parts": [prompt],
+            "parts": [full_prompt_content],
             "visible": False,
             "analysis": True
         })
@@ -178,7 +229,7 @@ Analyze the provided images in order, following the guidelines from the previous
         })
         save_history(user_id, history)
 
-    # --- Persist full state (identical for both modes) ---
+    # --- Persist full state ---
     save_state(
         user_id,
         {
@@ -193,6 +244,7 @@ Analyze the provided images in order, following the guidelines from the previous
     )
 
     return result
+
 
 def update_type_dropdowns(files, classification):
     if files:
@@ -248,9 +300,6 @@ def update_type_dropdowns(files, classification):
     return row_updates + image_updates + dropdown_updates
 
 
-# Removed auto_detect_image_type function - users must classify manually
-
-
 def update_button_and_status(
     user_id, files, classification, user_description, *type_selections
 ):
@@ -270,10 +319,6 @@ def update_button_and_status(
 
     ready = has_id and has_files and has_class and typed_ok and has_desc
     return gr.update(interactive=ready)
-
-
-def format_analysis_results(result, classification, files, image_info):
-    return result
 
 
 def handle_conversation_message(message, history, user_id):
@@ -365,14 +410,9 @@ def handle_conversation_message(message, history, user_id):
 
 
 def ensure_conversation_intro(user_id):
-    """
-    Ensure both the system conversational prompt and the tutor's greeting
-    are present in history so the model starts with the right instructions.
-    """
     history = load_history(user_id) or []
     has_visible = any(m.get("visible", False) for m in history)
     if not has_visible:
-        # Load system conversational prompt
         try:
             with open(PROMPT_CONVERSATION, "r", encoding="utf-8") as f:
                 conversation_prompt = f.read()
@@ -381,7 +421,6 @@ def ensure_conversation_intro(user_id):
                 "Ets un tutor de disseny que dona feedback als estudiants."
             )
 
-        # Inject hidden system prompt for the model
         system_prompt = {
             "role": "user",
             "parts": [conversation_prompt],
@@ -390,7 +429,6 @@ def ensure_conversation_intro(user_id):
         }
         history.append(system_prompt)
 
-        # Inject visible greeting for the student
         greeting = {
             "role": "model",
             "parts": [
@@ -408,14 +446,6 @@ def ensure_conversation_intro(user_id):
 
 
 def restore_config_for_user(user_id, max_images=MAX_IMAGES):
-    """
-    Loads states/<id>.json and returns:
-    - classification value
-    - files value (list of paths)
-    - user_description value
-    - llm_output value (analysis)
-    - one output per type dropdown (value for each, length = MAX_IMAGES)
-    """
     state = load_state(user_id) or {
         "classification": None,
         "description": "",
@@ -425,7 +455,6 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
     classification_val = state.get("classification")
     description_val = state.get("description") or ""
 
-    # Prefer the last 'analysis' message from history; fallback to state.json
     last_analysis_msg = get_last_message_with_flag(user_id, "analysis")
     last_analysis_text = extract_text_from_parts(last_analysis_msg) if last_analysis_msg else ""
     analysis_val = (
@@ -437,7 +466,6 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
     file_paths = [f.get("path") for f in (state.get("files") or []) if f.get("path")]
     types = [f.get("type") for f in (state.get("files") or [])]
 
-    # Build dropdown value updates up to MAX_IMAGES
     dd_values = []
     for i in range(max_images):
         v = types[i] if i < len(types) else None
@@ -456,16 +484,12 @@ def restore_config_for_user(user_id, max_images=MAX_IMAGES):
         analysis_val,
         *dd_values,
         file_paths,
-        filename_update,  # current_filename
+        filename_update,
     )
 
 
 def disable_analyze_if_done(user_id):
-    """
-    If analysis is already saved for this user, disable the analyze button.
-    Otherwise, leave it unchanged.
-    """
     state = load_state(user_id) or {}
     if state.get("analysis"):
         return gr.update(interactive=False)
-    return gr.update()  # no change
+    return gr.update()

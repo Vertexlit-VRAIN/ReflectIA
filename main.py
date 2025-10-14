@@ -113,7 +113,7 @@ def commit_id(uid_text):
     )
 
 
-def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
+def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel, progress=gr.Progress()):
     # Step 1
     yield (
         "**Analitzant les imatges..., espereu un moment**",
@@ -128,7 +128,7 @@ def analyze_and_close(uid, files_v, classification_v, user_desc, *type_sel):
     if DEBUG_FAKE_WAIT_SECONDS and DEBUG_FAKE_WAIT_SECONDS > 0:
         time.sleep(DEBUG_FAKE_WAIT_SECONDS)
 
-    text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel)
+    text = generate_llm_response(uid, files_v, classification_v, user_desc, *type_sel, progress=progress)
     chat_messages = ensure_conversation_intro(uid)
 
     # Step 2: show results + unlock chat + select tab + HIDE overlay + DISABLE analyze
