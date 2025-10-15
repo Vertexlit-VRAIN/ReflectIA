@@ -260,7 +260,7 @@ def update_type_dropdowns(files, classification):
         return row_updates + image_updates + dropdown_updates
 
     if classification == "Pràctica 1. Revista":
-        type_options = ["Portada", "Pàgines interiors", "Contraportada"]
+        type_options = ["Portada", "Pàgines interiors"]
     elif classification == "Pràctica 2. Xarxes Socials":
         type_options = [
             "Newsletter",
