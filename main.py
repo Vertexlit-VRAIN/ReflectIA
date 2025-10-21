@@ -363,11 +363,12 @@ def main():
 
                 # Results area
                 gr.Markdown(
-                    "## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-title"]
+                    "## 🤖 Resultats de l'Anàlisi IA", elem_classes=["analysis-title"], visible=False
                 )
                 llm_output = gr.Markdown(
                     value="Pugeu imatges, seleccioneu classificació i cliqueu **“🔍 Analitzar”**…",
                     elem_classes=["analysis-section", "llm-output", "result-card"],
+                    visible=False
                 )
 
             # ===== Tab: Anàlisi (chat) — rendered but disabled until analysis done =====
