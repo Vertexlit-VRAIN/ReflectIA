@@ -52,4 +52,14 @@ Thumbs.db
 # *.parquet
 data/
 
+incomplete_data/
+
+examples/
+
+prueba/
+
+dialogues/
+
+analisi-final.zip
+
 CLAUDE.md
