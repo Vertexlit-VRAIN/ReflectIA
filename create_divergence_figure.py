@@ -25,6 +25,8 @@ from collections import defaultdict
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib import patheffects as pe
 
 from metrics.helpers import (
     default_is_conversation_msg,
@@ -165,52 +167,110 @@ def project_umap(E: np.ndarray) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------
-# Plot
+# Plot (paper-ready)
 # ---------------------------------------------------------------------
 def plot_practice(rows: List[Dict[str, Any]], practice_id: str) -> plt.Figure:
     U = np.vstack([r["centroid_user"] for r in rows])
     M = np.vstack([r["centroid_model"] for r in rows])
     X = project_umap(np.vstack([U, M]))
-
     Xu, Xm = X[: len(rows)], X[len(rows) :]
 
     avg = np.array([r["avg_dist"] for r in rows], dtype=np.float64)
     p90 = np.array([r["p90_dist"] for r in rows], dtype=np.float64)
 
-    avg_n = (avg - avg.min()) / (avg.max() - avg.min() + 1e-9)
-    p90_n = (p90 - p90.min()) / (p90.max() - p90.min() + 1e-9)
+    # Normalize for sizing
+    p90_min, p90_max = float(np.min(p90)), float(np.max(p90))
+    p90_n = (p90 - p90_min) / (p90_max - p90_min + 1e-12)
+    size = 35 + 50 * p90_n
 
-    size = 40 + 160 * p90_n
+    # Outliers by avg distance
     outlier_thr = np.percentile(avg, 85)
+
+    # Typography / sizing
+    mpl.rcParams.update({
+        "axes.titlesize": 12,
+        "axes.labelsize": 11,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 9,
+        "legend.fontsize": 9,
+    })
 
     fig, ax = plt.subplots(figsize=(7.2, 5.4))
 
-    ax.set_title(
-        f"Semantic displacement student-AI (Practice {practice_id})",
-        pad=6,
+    # Minimal spines + subtle grid (paper-ish)
+    ax.grid(True, alpha=0.18, linewidth=0.7)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    ax.set_title(f"Semantic displacement - Project {practice_id})", pad=8)
+
+    # Color encodes avg distance (with colorbar)
+    avg_min, avg_max = float(np.min(avg)), float(np.max(avg))
+    cmap = plt.get_cmap("viridis")
+    norm = mpl.colors.Normalize(vmin=avg_min, vmax=avg_max)
+
+    # Markers: distinguish roles by shape + fill (avoid extra colors)
+    student_face = "#FFFFFF"
+    student_edge = "#333333"
+    ai_face = "#333333"
+    ai_edge = "#333333"
+
+    # Centroids
+    ax.scatter(
+        Xu[:, 0], Xu[:, 1],
+        s=size,
+        facecolors=student_face,
+        edgecolors=student_edge,
+        linewidths=1.0,
+        label="Student centroid",
+        zorder=3,
+    )
+    ax.scatter(
+        Xm[:, 0], Xm[:, 1],
+        s=size,
+        marker="s",
+        facecolors=ai_face,
+        edgecolors=ai_edge,
+        linewidths=0.8,
+        label="AI centroid",
+        zorder=3,
     )
 
-    ax.scatter(Xu[:, 0], Xu[:, 1], s=size, label="Student centroid")
-    ax.scatter(Xm[:, 0], Xm[:, 1], s=size, marker="s", label="AI centroid")
-
-    for r, u, m, w in zip(rows, Xu, Xm, avg_n):
+    # Arrows: colored by avg distance for interpretability
+    for r, u, m, a in zip(rows, Xu, Xm, avg):
+        color = cmap(norm(a))
         ax.annotate(
             "",
             xy=(m[0], m[1]),
             xytext=(u[0], u[1]),
             arrowprops=dict(
-                arrowstyle="->",
-                lw=0.7 + 3.0 * w,
-                alpha=0.25 + 0.65 * w,
+                arrowstyle="-|>",
+                mutation_scale=12,   # flecha un poco más visible
+                lw=1.6,              # línea más gruesa
+                color=color,
+                alpha=0.6,
+                shrinkA=0,
+                shrinkB=0,
             ),
+            zorder=2,
         )
+
+        # Label only outliers, with a white outline for readability
         if r["avg_dist"] >= outlier_thr:
-            ax.text(u[0], u[1], r["conversation_id"], fontsize=7)
+            txt = ax.text(u[0], u[1], r["conversation_id"], fontsize=8, color="#111111", zorder=4)
+            txt.set_path_effects([pe.withStroke(linewidth=3, foreground="white", alpha=0.9)])
 
     ax.set_xlabel("UMAP-1")
     ax.set_ylabel("UMAP-2")
-    ax.legend(frameon=False, fontsize=9)
-    ax.grid(True, alpha=0.15)
+
+    # Colorbar (avg distance)
+    sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, fraction=0.045, pad=0.02)
+    cbar.set_label("Avg cosine distance (student→AI)", rotation=90)
+
+    # Legend
+    ax.legend(frameon=False, loc="upper right")
 
     plt.tight_layout()
     return fig
@@ -322,9 +382,6 @@ def main():
         all_medians = np.array([float(r["median_div"]) for r in conv_rows_this], dtype=np.float64)
         all_p90 = np.array([float(r["p90_div"]) for r in conv_rows_this], dtype=np.float64)
 
-        # Also compute over ALL turn pairs (more direct)
-        # collect distances from raw pairs by re-loading? (avoid extra load: approximate with conv stats)
-        # We'll report conv-level aggregates (stable, interpretable)
         p_row = {
             "practice_id": practice_id,
             "conversations": len(rows),
@@ -344,13 +401,19 @@ def main():
         practice_table_rows.append(p_row)
 
     # Write tables
-    conv_fields = ["practice_id", "student_id", "conversation_id", "n_pairs", "mean_div", "median_div", "p90_div"] + \
-                  [f"pct_le_{t:.2f}" for t in thresholds] + ["pct_ge_0_60"]
+    conv_fields = (
+        ["practice_id", "student_id", "conversation_id", "n_pairs", "mean_div", "median_div", "p90_div"]
+        + [f"pct_le_{t:.2f}" for t in thresholds]
+        + ["pct_ge_0_60"]
+    )
     write_csv(outdir / "summary_by_conversation.csv", conv_fields, conversation_table_rows)
 
-    prac_fields = ["practice_id", "conversations", "pairs_total", "mean_div_conversations",
-                   "median_div_conversations", "p90_div_conversations"] + \
-                  [f"pct_le_{t:.2f}_avg" for t in thresholds] + ["pct_ge_0_60_avg"]
+    prac_fields = (
+        ["practice_id", "conversations", "pairs_total", "mean_div_conversations",
+         "median_div_conversations", "p90_div_conversations"]
+        + [f"pct_le_{t:.2f}_avg" for t in thresholds]
+        + ["pct_ge_0_60_avg"]
+    )
     write_csv(outdir / "summary_by_practice.csv", prac_fields, practice_table_rows)
 
     print(f"\nTables written to: {outdir.resolve()}")

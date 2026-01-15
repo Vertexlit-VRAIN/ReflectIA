@@ -100,7 +100,7 @@ def main():
                     color="black", fontsize=9
                 )
 
-        ax.set_title(f"Thematic code distribution — Group {grp} (n={n})")
+        ax.set_title(f"Thematic code distribution - Project {grp} (n={n})")
         ax.set_xlabel("Percentage (%)")
         ax.set_ylabel("Code")
 

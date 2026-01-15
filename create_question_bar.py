@@ -102,7 +102,7 @@ def main():
                 fontweight="bold"
             )
 
-        ax.set_title(f"Question subtype distribution — Group {grp} (n={n})")
+        ax.set_title(f"Question subtype distribution - Project {grp} (n={n})")
         ax.set_xlabel("Question subtype")
         ax.set_ylabel("Percentage (%)")
 
