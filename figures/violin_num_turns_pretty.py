@@ -12,8 +12,8 @@ def plot_violin_minimal(
     out_pdf: Path,
     out_png: Path,
     dpi_png: int = 600,
-    seed: int = 7,
     double_column: bool = False,
+    bw_method: float = 0.4,
 ):
     # Compact typography for IEEE
     plt.rcParams.update({
@@ -24,12 +24,7 @@ def plot_violin_minimal(
         "ytick.labelsize": 8,
     })
 
-    rng = np.random.default_rng(seed)
     order = sorted(df["practice_id"].dropna().astype(str).unique().tolist())
-
-    # Colors: Matplotlib defaults (C0, C1, ...)
-    palette = ["C0", "C1", "C2", "C3", "C4"]
-    color_by_group = {g: palette[i % len(palette)] for i, g in enumerate(order)}
 
     # Data and n per group
     data = []
@@ -46,58 +41,54 @@ def plot_violin_minimal(
     fig, ax = plt.subplots(figsize=figsize)
     positions = np.arange(1, len(order) + 1)
 
-    # Violin (light)
+    # --- Violin (grayscale, outlined, print-friendly) ---
     vp = ax.violinplot(
         data,
         positions=positions,
+        widths=0.9,
         showmeans=False,
         showmedians=False,
         showextrema=False,
-        widths=0.9,
+        bw_method=bw_method,
     )
     for body in vp["bodies"]:
-        body.set_alpha(0.25)
-        body.set_edgecolor("none")
+        body.set_facecolor("0.6")
+        body.set_alpha(0.20)
+        body.set_edgecolor("0.35")
+        body.set_linewidth(0.8)
 
-    # Boxplot (thin lines)
-    ax.boxplot(
+    # --- Boxplot (black lines, white fill) ---
+    bp = ax.boxplot(
         data,
         positions=positions,
         widths=0.25,
         showfliers=False,
-        medianprops={"linewidth": 1.2},
-        whiskerprops={"linewidth": 1.0},
-        capprops={"linewidth": 1.0},
-        boxprops={"linewidth": 1.0},
+        patch_artist=True,
+        medianprops={"linewidth": 1.3, "color": "0.0"},
+        whiskerprops={"linewidth": 1.1, "color": "0.0"},
+        capprops={"linewidth": 1.1, "color": "0.0"},
+        boxprops={"linewidth": 1.1, "color": "0.0"},
     )
+    for box in bp["boxes"]:
+        box.set_facecolor("1.0")
+        box.set_alpha(1.0)
 
-    # Points (jitter; colored by group)
-    for i, (g, vals) in enumerate(zip(order, data), start=1):
-        if vals.size == 0:
-            continue
-        jitter = rng.normal(0, 0, size=vals.size)
-        ax.scatter(
-            np.full(vals.size, i) + jitter,
-            vals,
-            s=18,
-            alpha=0.75,
-            color=color_by_group[g],
-            edgecolors="none",
-            zorder=3,
-        )
-
-    # X ticks with n (no extra annotations)
+    # X ticks with n
     xticklabels = [f"Project {g}\n(n={n_by_group[g]})" for g in order]
     ax.set_xticks(positions)
     ax.set_xticklabels(xticklabels)
 
     ax.set_ylabel("Turns per dialogue")
 
-    # Grid + lighter spines
-    ax.grid(True, axis="y", alpha=0.20)
+    # Grid: light major y-grid only
+    ax.grid(True, axis="y", which="major", alpha=0.15, linewidth=0.8)
     ax.set_axisbelow(True)
-    for spine in ax.spines.values():
-        spine.set_linewidth(1.0)
+
+    # Spines: reduce clutter
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_linewidth(1.0)
+    ax.spines["bottom"].set_linewidth(1.0)
 
     # Space for newline in x tick labels
     fig.subplots_adjust(bottom=0.28)
@@ -114,6 +105,7 @@ def main():
     ap.add_argument("--raw", required=True, help="CSV raw con practice_id y num_turns")
     ap.add_argument("--outdir", default="out", help="Directorio de salida")
     ap.add_argument("--dpi", type=int, default=900, help="DPI para PNG")
+    ap.add_argument("--bw", type=float, default=0.4, help="Bandwidth KDE del violín")
     ap.add_argument("--doublecol", action="store_true", help="Formato doble columna (~7in ancho)")
     args = ap.parse_args()
 
@@ -130,6 +122,7 @@ def main():
         out_png=outdir / "fig_turns_violin_ieee_minimal.png",
         dpi_png=args.dpi,
         double_column=args.doublecol,
+        bw_method=args.bw,
     )
 
     print("OK ->", outdir / "fig_turns_violin_ieee_minimal.pdf")

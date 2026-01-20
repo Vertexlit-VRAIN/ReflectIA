@@ -202,7 +202,7 @@ def plot_practice(rows: List[Dict[str, Any]], practice_id: str) -> plt.Figure:
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 
-    ax.set_title(f"Semantic displacement - Project {practice_id})", pad=8)
+    ax.set_title(f"Semantic displacement - Project {practice_id}", pad=8)
 
     # Color encodes avg distance (with colorbar)
     avg_min, avg_max = float(np.min(avg)), float(np.max(avg))

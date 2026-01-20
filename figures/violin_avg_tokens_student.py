@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-IEEE-ready violin + boxplot + points for avg_tokens_student:
+IEEE-ready violin + boxplot for avg_tokens_student:
 - violin (density)
 - boxplot (median + IQR)
-- jittered points (bounded, centered)
+- NO points
 - NO mean, NO CI
-- saves PDF (vector) + PNG (900 DPI)
+- saves PNG only (900 DPI)
 
 Usage:
   python violin_box_student_tokens_ieee.py --raw raw.csv --outdir out
@@ -25,10 +25,8 @@ import matplotlib.pyplot as plt
 
 def plot_violin_box_student_tokens(
     df: pd.DataFrame,
-    out_pdf: Path,
     out_png: Path,
     dpi_png: int = 900,
-    seed: int = 7,
     double_column: bool = False,
 ):
     # IEEE compact typography
@@ -39,11 +37,7 @@ def plot_violin_box_student_tokens(
         "ytick.labelsize": 8,
     })
 
-    rng = np.random.default_rng(seed)
     order = sorted(df["practice_id"].dropna().astype(str).unique().tolist())
-
-    palette = ["C0", "C1", "C2", "C3"]
-    color_by_group = {g: palette[i % len(palette)] for i, g in enumerate(order)}
 
     data = []
     n_by_group = {}
@@ -85,28 +79,12 @@ def plot_violin_box_student_tokens(
         boxprops={"linewidth": 1.0},
     )
 
-    # --- Points (bounded jitter, centered) ---
-    jitter_width = 0.0
-    for i, (g, vals) in enumerate(zip(order, data), start=1):
-        if vals.size == 0:
-            continue
-        jitter = rng.uniform(-jitter_width, jitter_width, size=vals.size)
-        ax.scatter(
-            i + jitter,
-            vals,
-            s=16,
-            alpha=0.65,
-            color=color_by_group[g],
-            edgecolors="none",
-            zorder=3,
-        )
-
     # X ticks with n
     ax.set_xticks(positions)
     ax.set_xticklabels([f"Project {g}\n(n={n_by_group[g]})" for g in order])
 
     # Axis label
-    ax.set_ylabel("Message length")
+    ax.set_ylabel("Message length (tokens)")
 
     # Grid + spines
     ax.grid(True, axis="y", alpha=0.20)
@@ -118,9 +96,8 @@ def plot_violin_box_student_tokens(
     fig.subplots_adjust(bottom=0.28)
     fig.tight_layout()
 
-    out_pdf.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_pdf, bbox_inches="tight")              # vector
-    fig.savefig(out_png, dpi=dpi_png, bbox_inches="tight") # raster
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_png, dpi=dpi_png, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -140,12 +117,10 @@ def main():
     outdir = Path(args.outdir)
     plot_violin_box_student_tokens(
         df=df,
-        out_pdf=outdir / "fig_student_tokens_violin_box_ieee.pdf",
         out_png=outdir / "fig_student_tokens_violin_box_ieee.png",
         double_column=args.doublecol,
     )
 
-    print("OK ->", outdir / "fig_student_tokens_violin_box_ieee.pdf")
     print("OK ->", outdir / "fig_student_tokens_violin_box_ieee.png (900 DPI)")
 
 
