@@ -66,4 +66,7 @@ automatic/
 
 metrics_output/
 
-CLAUDE.md
+figures/**
+
+
+uv.lock
