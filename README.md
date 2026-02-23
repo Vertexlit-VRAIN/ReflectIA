@@ -117,26 +117,6 @@ All analyses and conversations are stored in JSON format for reproducibility and
 
 ---
 
-## Project Structure
-
-```
-ReflectIA/
-├── main.py
-├── ai_providers.py
-├── gradio_callbacks.py
-├── history_manager.py
-├── compute_metrics.py
-├── extract_generic.py
-├── create_*.py
-├── metrics/
-├── prompts/
-├── figures/
-├── data/
-└── static/
-```
-
----
-
 ## Citation
 
 A research paper describing ReflectIA is currently in preparation.
