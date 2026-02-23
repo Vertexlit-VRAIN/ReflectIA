@@ -1,3 +1,0 @@
-practice_id,conversations,pairs_total,mean_div_conversations,median_div_conversations,p90_div_conversations,pct_le_0.25_avg,pct_le_0.35_avg,pct_le_0.60_avg,pct_ge_0_60_avg
-A,29,345,0.4813,0.461068,0.660575,8.71,26.15,73.41,26.59
-B,29,396,0.45741,0.424133,0.705189,13.76,34.22,75.3,24.7
