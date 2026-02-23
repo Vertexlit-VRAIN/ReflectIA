@@ -69,9 +69,11 @@ The `prompts` directory contains the following files, which are used to guide th
 
 Related paper: A research paper describing the methodology and evaluation of CritiCat is currently in preparation. Until its publication, please cite this GitHub repository if you use this project in academic work.
 
+```latex
 @misc{reflectia2026,
   author = {{Vertexlit-VRAIN}},
   title  = {{ReflectIA}: AI-Powered Image Analysis Tool},
   year   = {2026},
   note   = {Available at: https://github.com/Vertexlit-VRAIN/ReflectIA. GitHub repository. A related research paper is currently in preparation; please cite this repository for the time being.}
 }
+```
