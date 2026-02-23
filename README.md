@@ -20,17 +20,6 @@ ReflectIA has two main components:
 
 The system is designed for design education scenarios where structured critique and iterative reflection are central.
 
-### 2. Research Support
-
-All interactions are stored in structured JSON format, enabling:
-
-- Dialogue export
-- Tag extraction
-- Metric computation
-- Quantitative and qualitative analysis
-
-The repository includes scripts used in the ongoing research work.
-
 ---
 
 ## Current Prompt Versions
@@ -100,22 +89,6 @@ uv run main.py
 ```
 
 This launches the Gradio interface in your browser.
-
----
-
-## Data Storage
-
-Each student has a dedicated folder:
-
-```
-data/<student_id>/
-    messages.json
-    state.json
-    files/
-```
-
-All analyses and conversations are stored in JSON format for reproducibility and research purposes.
-
 ---
 
 ## Citation
