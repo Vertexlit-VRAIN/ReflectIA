@@ -49,8 +49,9 @@ These prompts define:
 - Whole-project (conjunto) analysis structure
 - Conversational tutoring behavior
 
-All other prompts present in the repository correspond to earlier iterations and experimental versions.  
-The current prompts are the result of progressive refinement and evolution across multiple design and research cycles.
+Although prompt development progressed iteratively up to version 9 during experimentation, we decided to return to version 5 as the most pedagogically stable baseline. The current `v5.4` conversation prompt reflects targeted refinements applied to that original v5 structure, incorporating selected improvements identified during later iterations.
+
+All other prompts present in the repository correspond to intermediate experimental stages. The current prompts represent the outcome of progressive refinement across multiple design and research cycles.
 
 ---
 
