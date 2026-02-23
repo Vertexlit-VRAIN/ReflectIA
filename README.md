@@ -64,3 +64,14 @@ The `prompts` directory contains the following files, which are used to guide th
 - `prompt_magazine_full.txt`: A more comprehensive version of the magazine prompt, this file guides the AI to evaluate a magazine project (cover and interior pages/spreads) using both general and editorial-specific design criteria. The "full" version incorporates general design principles as well as platform-specific best practices.
 - `prompt_social.txt`: This prompt is used for analyzing social media posts. It guides the AI to analyze any social media asset and provide a structured, detailed diagnosis.
 - `prompt_social_full.txt`: A more comprehensive version of the social media prompt, this file guides the AI to evaluate a campaign consisting of Instagram and Twitter/X posts, as well as a newsletter, using both general and platform-specific design criteria. The "full" version incorporates general design principles as well as platform-specific best practices.
+
+---
+
+Related paper: A research paper describing the methodology and evaluation of CritiCat is currently in preparation. Until its publication, please cite this GitHub repository if you use this project in academic work.
+
+@misc{reflectia2026,
+  author = {{Vertexlit-VRAIN}},
+  title  = {{ReflectIA}: AI-Powered Image Analysis Tool},
+  year   = {2026},
+  note   = {Available at: https://github.com/Vertexlit-VRAIN/ReflectIA. GitHub repository. A related research paper is currently in preparation; please cite this repository for the time being.}
+}
