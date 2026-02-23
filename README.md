@@ -1,6 +1,6 @@
-# CritiCat
+# ReflectIA
 
-CritiCat is an AI-powered image analysis tool that provides detailed feedback for various image classifications, such as editorial content and social media posts.
+ReflectIA is an AI-powered image analysis tool that provides detailed feedback for various image classifications, such as editorial content and social media posts.
 
 ## Description
 
@@ -67,7 +67,7 @@ The `prompts` directory contains the following files, which are used to guide th
 
 ---
 
-Related paper: A research paper describing the methodology and evaluation of CritiCat is currently in preparation. Until its publication, please cite this GitHub repository if you use this project in academic work.
+Related paper: A research paper describing the methodology and evaluation of ReflectIA is currently in preparation. Until its publication, please cite this GitHub repository if you use this project in academic work.
 
 ```latex
 @misc{reflectia2026,
